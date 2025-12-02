@@ -101,6 +101,39 @@ jobs:
             --skip-duplicate
         done
     
+    - name: Build release notes
+      id: release-notes
+      run: |
+        cat << 'EOF' > release-notes.md
+        ## NuGet Packages Published
+        
+        EOF
+        if [ "${{ inputs.publish-inprocess }}" == "true" ]; then
+          echo "✅ Extensions.Azure.WebJobs.SQS v${{ inputs.version }}" >> release-notes.md
+        fi
+        if [ "${{ inputs.publish-isolated }}" == "true" ]; then
+          echo "✅ Extensions.Azure.Functions.Worker.SQS v${{ inputs.version }}" >> release-notes.md
+        fi
+        cat << 'EOF' >> release-notes.md
+        
+        ### Installation
+        
+        ```bash
+        # In-Process Model
+        dotnet add package Extensions.Azure.WebJobs.SQS --version ${{ inputs.version }}
+        
+        # Isolated Worker Model (Recommended)
+        dotnet add package Extensions.Azure.Functions.Worker.SQS --version ${{ inputs.version }}
+        ```
+        
+        ### Links
+        
+        - [Documentation](https://github.com/laveeshb/azure-functions-sqs-extension/blob/main/dotnet/README.md)
+        - [Migration Guide](https://github.com/laveeshb/azure-functions-sqs-extension/blob/main/dotnet/MIGRATION_GUIDE.md)
+        - [NuGet - In-Process](https://www.nuget.org/packages/Extensions.Azure.WebJobs.SQS/${{ inputs.version }})
+        - [NuGet - Isolated Worker](https://www.nuget.org/packages/Extensions.Azure.Functions.Worker.SQS/${{ inputs.version }})
+        EOF
+    
     - name: Create GitHub Release
       uses: softprops/action-gh-release@v1
       env:
@@ -108,28 +141,7 @@ jobs:
       with:
         tag_name: v${{ inputs.version }}
         name: Release v${{ inputs.version }}
-        body: |
-          ## NuGet Packages Published
-          
-          ${{ inputs.publish-inprocess && '✅ Extensions.Azure.WebJobs.SQS v${{ inputs.version }}' || '' }}
-          ${{ inputs.publish-isolated && '✅ Extensions.Azure.Functions.Worker.SQS v${{ inputs.version }}' || '' }}
-          
-          ### Installation
-          
-          ```bash
-          # In-Process Model
-          dotnet add package Extensions.Azure.WebJobs.SQS --version ${{ inputs.version }}
-          
-          # Isolated Worker Model (Recommended)
-          dotnet add package Extensions.Azure.Functions.Worker.SQS --version ${{ inputs.version }}
-          ```
-          
-          ### Links
-          
-          - [Documentation](https://github.com/laveeshb/azure-functions-sqs-extension/blob/main/dotnet/README.md)
-          - [Migration Guide](https://github.com/laveeshb/azure-functions-sqs-extension/blob/main/dotnet/MIGRATION_GUIDE.md)
-          - [NuGet - In-Process](https://www.nuget.org/packages/Extensions.Azure.WebJobs.SQS/${{ inputs.version }})
-          - [NuGet - Isolated Worker](https://www.nuget.org/packages/Extensions.Azure.Functions.Worker.SQS/${{ inputs.version }})
+        body_path: release-notes.md
         draft: false
         prerelease: ${{ contains(inputs.version, '-') }}
         files: ./packages/*.nupkg
