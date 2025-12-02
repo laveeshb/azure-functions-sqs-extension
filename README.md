@@ -1,6 +1,8 @@
 # Azure Functions - Amazon SQS Extension
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![.NET](https://img.shields.io/badge/.NET-6.0%20%7C%208.0-512BD4?logo=dotnet)](https://dotnet.microsoft.com/)
+[![NuGet - In-Process](https://img.shields.io/nuget/v/Azure.WebJobs.Extensions.SQS.svg?label=Azure.WebJobs.Extensions.SQS)](https://www.nuget.org/packages/Azure.WebJobs.Extensions.SQS)
+[![NuGet - Isolated Worker](https://img.shields.io/nuget/v/Azure.Functions.Worker.Extensions.SQS.svg?label=Azure.Functions.Worker.Extensions.SQS)](https://www.nuget.org/packages/Azure.Functions.Worker.Extensions.SQS)
 
 Multi-language Azure Functions bindings for Amazon Simple Queue Service (SQS).
 
