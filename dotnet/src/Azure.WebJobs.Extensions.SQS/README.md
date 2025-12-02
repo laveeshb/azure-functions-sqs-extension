@@ -297,6 +297,6 @@ Ensure your AWS credentials have these permissions:
 ## Links
 
 - [GitHub Repository](https://github.com/laveeshb/azure-functions-sqs-extension)
-- [NuGet Package](https://www.nuget.org/packages/Azure.WebJobs.Extensions.SQS)
-- [Isolated Worker Package](https://www.nuget.org/packages/Azure.Functions.Worker.Extensions.SQS)
+- [NuGet Package](https://www.nuget.org/packages/Extensions.Azure.WebJobs.SQS)
+- [Isolated Worker Package](https://www.nuget.org/packages/Extensions.Azure.Functions.Worker.SQS)
 - [Report Issues](https://github.com/laveeshb/azure-functions-sqs-extension/issues)
