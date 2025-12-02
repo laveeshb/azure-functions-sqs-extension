@@ -100,5 +100,5 @@ Write-Host ""
 Write-Host "Next steps:" -ForegroundColor Yellow
 Write-Host "  Run tests: .\scripts\ci-test.ps1"
 if (-not $Package) {
-    Write-Host "  Create packages: .\build.ps1 -Configuration Release -Package"
+    Write-Host "  Create packages: .\scripts\build.ps1 -Configuration Release -Package"
 }
