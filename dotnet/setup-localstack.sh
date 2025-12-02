@@ -1,0 +1,88 @@
+#!/bin/bash
+
+# LocalStack Setup Script for Azure Functions SQS Extension Testing
+# This script sets up LocalStack with SQS queues for local testing
+
+set -e
+
+echo "🚀 Starting LocalStack for SQS testing..."
+
+# Check if Docker is running
+if ! docker info > /dev/null 2>&1; then
+    echo "❌ Error: Docker is not running. Please start Docker first."
+    exit 1
+fi
+
+# Start LocalStack
+echo "📦 Starting LocalStack container..."
+docker-compose -f docker-compose.localstack.yml up -d
+
+# Wait for LocalStack to be ready
+echo "⏳ Waiting for LocalStack to be ready..."
+timeout=30
+counter=0
+until curl -s http://localhost:4566/_localstack/health | grep -q '"sqs": "available"' || [ $counter -eq $timeout ]; do
+    echo "   Waiting... ($counter/$timeout seconds)"
+    sleep 1
+    ((counter++))
+done
+
+if [ $counter -eq $timeout ]; then
+    echo "❌ Error: LocalStack failed to start within $timeout seconds"
+    exit 1
+fi
+
+echo "✅ LocalStack is ready!"
+
+# Create test queues
+echo "📝 Creating SQS test queues..."
+
+# Standard queue
+aws --endpoint-url=http://localhost:4566 sqs create-queue \
+    --queue-name test-queue \
+    --region us-east-1 \
+    --no-cli-pager \
+    2>/dev/null || echo "   Queue 'test-queue' may already exist"
+
+# FIFO queue
+aws --endpoint-url=http://localhost:4566 sqs create-queue \
+    --queue-name test-queue.fifo \
+    --attributes FifoQueue=true \
+    --region us-east-1 \
+    --no-cli-pager \
+    2>/dev/null || echo "   Queue 'test-queue.fifo' may already exist"
+
+# Dead letter queue
+aws --endpoint-url=http://localhost:4566 sqs create-queue \
+    --queue-name test-dlq \
+    --region us-east-1 \
+    --no-cli-pager \
+    2>/dev/null || echo "   Queue 'test-dlq' may already exist"
+
+echo ""
+echo "✅ LocalStack SQS setup complete!"
+echo ""
+echo "📋 Available queues:"
+aws --endpoint-url=http://localhost:4566 sqs list-queues --region us-east-1 --no-cli-pager
+echo ""
+echo "🔗 LocalStack endpoint: http://localhost:4566"
+echo "🌍 Region: us-east-1"
+echo ""
+echo "⚙️  Configure your local.settings.json with:"
+echo '{
+  "IsEncrypted": false,
+  "Values": {
+    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+    "FUNCTIONS_WORKER_RUNTIME": "dotnet-isolated",
+    "AWS_REGION": "us-east-1",
+    "AWS_ACCESS_KEY_ID": "test",
+    "AWS_SECRET_ACCESS_KEY": "test",
+    "AWS_ENDPOINT_URL": "http://localhost:4566"
+  }
+}'
+echo ""
+echo "🧪 To send a test message:"
+echo "   ./send-test-message.sh"
+echo ""
+echo "🛑 To stop LocalStack:"
+echo "   docker-compose -f docker-compose.localstack.yml down"

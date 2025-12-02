@@ -290,6 +290,19 @@ Configure polling behavior in `host.json`:
 - [AWS CLI](https://aws.amazon.com/cli/)
 - Amazon SQS queue or [LocalStack](https://localstack.cloud/) for local testing
 
+### Testing with LocalStack
+
+For local development without connecting to AWS, we provide LocalStack integration. See the [LocalStack Testing Guide](./LOCALSTACK_TESTING.md) for complete setup instructions.
+
+**Quick start:**
+```bash
+# Start LocalStack with test queues
+./setup-localstack.sh
+
+# Send test messages
+./send-test-message.sh
+```
+
 ### Local Settings
 
 Create a `local.settings.json` file:
