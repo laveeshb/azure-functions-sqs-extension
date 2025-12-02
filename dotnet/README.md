@@ -20,7 +20,7 @@ This extension provides two separate packages following Microsoft's pattern for 
 
 | Package | Hosting Model | NuGet | Documentation |
 |---------|---------------|-------|---------------|
-| **Azure.WebJobs.Extensions.SQS** | In-process | Coming soon | [README](./src/Azure.WebJobs.Extensions.SQS/README.md) |
+| **Azure.Extensions.WebJobs.SQS** | In-process | Coming soon | [README](./src/Azure.WebJobs.Extensions.SQS/README.md) |
 | **Azure.Functions.Worker.Extensions.SQS** | Isolated worker | Coming soon | [README](./src/Azure.Functions.Worker.Extensions.SQS/README.md) |
 
 ## Installation
@@ -28,7 +28,7 @@ This extension provides two separate packages following Microsoft's pattern for 
 ### In-Process Model
 
 ```bash
-dotnet add package Azure.WebJobs.Extensions.SQS
+dotnet add package Azure.Extensions.WebJobs.SQS
 ```
 
 ### Isolated Worker Model (Recommended)

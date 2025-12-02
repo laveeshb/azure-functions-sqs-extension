@@ -7,7 +7,7 @@ Amazon SQS extension for Azure Functions using the **Isolated Worker (Out-of-Pro
 ## Installation
 
 ```bash
-dotnet add package Azure.Functions.Worker.Extensions.SQS
+dotnet add package Azure.Extensions.Functions.SQS
 ```
 
 ## Features
@@ -295,7 +295,7 @@ public class SqsSender
 
 ## Migration Guide
 
-### From In-Process Model (Azure.WebJobs.Extensions.SQS)
+### From In-Process Model (Azure.Extensions.WebJobs.SQS)
 
 #### 1. Update Project File
 
@@ -307,7 +307,7 @@ public class SqsSender
 <!-- Update packages -->
 <PackageReference Include="Microsoft.Azure.Functions.Worker" Version="1.23.0" />
 <PackageReference Include="Microsoft.Azure.Functions.Worker.Sdk" Version="1.18.1" />
-<PackageReference Include="Azure.Functions.Worker.Extensions.SQS" Version="1.0.0" />
+<PackageReference Include="Azure.Extensions.Functions.SQS" Version="1.0.0" />
 ```
 
 #### 2. Update Configuration
@@ -418,6 +418,6 @@ The isolated worker model is Microsoft's recommended approach for new Azure Func
 ## Links
 
 - [GitHub Repository](https://github.com/laveeshb/azure-functions-sqs-extension)
-- [NuGet Package](https://www.nuget.org/packages/Azure.Functions.Worker.Extensions.SQS)
-- [In-Process Package](https://www.nuget.org/packages/Azure.WebJobs.Extensions.SQS)
+- [NuGet Package](https://www.nuget.org/packages/Azure.Extensions.Functions.SQS)
+- [In-Process Package](https://www.nuget.org/packages/Azure.Extensions.WebJobs.SQS)
 - [Report Issues](https://github.com/laveeshb/azure-functions-sqs-extension/issues)

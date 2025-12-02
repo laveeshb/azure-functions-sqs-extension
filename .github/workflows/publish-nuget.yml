@@ -8,7 +8,7 @@ on:
         required: true
         type: string
       publish-inprocess:
-        description: 'Publish In-Process package (Azure.WebJobs.Extensions.SQS)'
+        description: 'Publish In-Process package (Azure.Extensions.WebJobs.SQS)'
         required: true
         type: boolean
         default: true
@@ -111,25 +111,25 @@ jobs:
         body: |
           ## NuGet Packages Published
           
-          ${{ inputs.publish-inprocess && '✅ Azure.WebJobs.Extensions.SQS v${{ inputs.version }}' || '' }}
-          ${{ inputs.publish-isolated && '✅ Azure.Functions.Worker.Extensions.SQS v${{ inputs.version }}' || '' }}
+          ${{ inputs.publish-inprocess && '✅ Azure.Extensions.WebJobs.SQS v${{ inputs.version }}' || '' }}
+          ${{ inputs.publish-isolated && '✅ Azure.Extensions.Functions.SQS v${{ inputs.version }}' || '' }}
           
           ### Installation
           
           ```bash
           # In-Process Model
-          dotnet add package Azure.WebJobs.Extensions.SQS --version ${{ inputs.version }}
+          dotnet add package Azure.Extensions.WebJobs.SQS --version ${{ inputs.version }}
           
           # Isolated Worker Model (Recommended)
-          dotnet add package Azure.Functions.Worker.Extensions.SQS --version ${{ inputs.version }}
+          dotnet add package Azure.Extensions.Functions.SQS --version ${{ inputs.version }}
           ```
           
           ### Links
           
           - [Documentation](https://github.com/laveeshb/azure-functions-sqs-extension/blob/main/dotnet/README.md)
           - [Migration Guide](https://github.com/laveeshb/azure-functions-sqs-extension/blob/main/dotnet/MIGRATION_GUIDE.md)
-          - [NuGet - In-Process](https://www.nuget.org/packages/Azure.WebJobs.Extensions.SQS/${{ inputs.version }})
-          - [NuGet - Isolated Worker](https://www.nuget.org/packages/Azure.Functions.Worker.Extensions.SQS/${{ inputs.version }})
+          - [NuGet - In-Process](https://www.nuget.org/packages/Azure.Extensions.WebJobs.SQS/${{ inputs.version }})
+          - [NuGet - Isolated Worker](https://www.nuget.org/packages/Azure.Extensions.Functions.SQS/${{ inputs.version }})
         draft: false
         prerelease: ${{ contains(inputs.version, '-') }}
         files: ./packages/*.nupkg

@@ -7,7 +7,7 @@ Amazon SQS extension for Azure Functions using the **In-Process (WebJobs) hostin
 ## Installation
 
 ```bash
-dotnet add package Azure.WebJobs.Extensions.SQS
+dotnet add package Azure.Extensions.WebJobs.SQS
 ```
 
 ## Features
