@@ -411,14 +411,6 @@ The isolated worker model is Microsoft's recommended approach for new Azure Func
 - ✅ **Future-proof**: Microsoft's focus for new features
 - ✅ **Better dependency management**: No conflicts with host dependencies
 
-## Contributing
-
-Contributions are welcome! Please see [CONTRIBUTING.md](https://github.com/laveeshb/azure-functions-sqs-extension/blob/main/CONTRIBUTING.md).
-
-## License
-
-MIT License - see [LICENSE](https://github.com/laveeshb/azure-functions-sqs-extension/blob/main/LICENSE)
-
 ## Links
 
 - [GitHub Repository](https://github.com/laveeshb/azure-functions-sqs-extension)

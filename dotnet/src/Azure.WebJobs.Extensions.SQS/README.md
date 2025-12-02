@@ -290,14 +290,6 @@ Ensure your AWS credentials have these permissions:
 }
 ```
 
-## Contributing
-
-Contributions are welcome! Please see [CONTRIBUTING.md](https://github.com/laveeshb/azure-functions-sqs-extension/blob/main/CONTRIBUTING.md).
-
-## License
-
-MIT License - see [LICENSE](https://github.com/laveeshb/azure-functions-sqs-extension/blob/main/LICENSE)
-
 ## Links
 
 - [GitHub Repository](https://github.com/laveeshb/azure-functions-sqs-extension)
