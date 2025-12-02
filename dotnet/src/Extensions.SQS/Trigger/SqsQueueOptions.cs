@@ -1,14 +1,22 @@
 ﻿
-namespace Azure.Functions.Extensions.SQS
+namespace Azure.Functions.Extensions.SQS;
+
+using System;
+
+public class SqsQueueOptions
 {
-    using System;
+    /// <summary>
+    /// Maximum number of messages to retrieve from SQS in a single request (1-10)
+    /// </summary>
+    public int? MaxNumberOfMessages { get; set; }
 
-    public class SqsQueueOptions
-    {
-        public int? MaxNumberOfMessages { get; set; }
+    /// <summary>
+    /// Interval between polling requests to SQS
+    /// </summary>
+    public TimeSpan? PollingInterval { get; set; }
 
-        public TimeSpan? PollingInterval { get; set; }
-
-        public TimeSpan? VisibilityTimeout { get; set; }
-    }
+    /// <summary>
+    /// Time that messages are hidden from other consumers after being retrieved
+    /// </summary>
+    public TimeSpan? VisibilityTimeout { get; set; }
 }

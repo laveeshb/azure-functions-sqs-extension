@@ -1,10 +1,18 @@
 ﻿
-namespace Azure.Functions.Extensions.SQS
-{
-    public class SqsQueueMessage
-    {
-        public string Body { get; set; }
+namespace Azure.Functions.Extensions.SQS;
 
-        public string QueueUrl { get; set; }
-    }
+/// <summary>
+/// Represents a message to send to an SQS queue
+/// </summary>
+public class SqsQueueMessage
+{
+    /// <summary>
+    /// The message body content
+    /// </summary>
+    public required string Body { get; set; }
+
+    /// <summary>
+    /// The target queue URL
+    /// </summary>
+    public required string QueueUrl { get; set; }
 }

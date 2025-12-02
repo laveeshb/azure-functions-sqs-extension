@@ -1,19 +1,34 @@
 ﻿
-namespace Azure.Functions.Extensions.SQS
+namespace Azure.Functions.Extensions.SQS;
+
+using System;
+using Microsoft.Azure.WebJobs.Description;
+
+[Binding]
+[AttributeUsage(AttributeTargets.Parameter)]
+public class SqsQueueTriggerAttribute : Attribute
 {
-    using System;
-    using Microsoft.Azure.WebJobs.Description;
+    /// <summary>
+    /// AWS Access Key ID. Optional - if not provided, will use AWS credential chain (environment variables, IAM roles, etc.)
+    /// </summary>
+    [AutoResolve]
+    public string? AWSKeyId { get; set; }
 
-    [Binding]
-    public class SqsQueueTriggerAttribute : Attribute
-    {
-        [AutoResolve]
-        public string AWSKeyId { get; set; }
+    /// <summary>
+    /// AWS Secret Access Key. Optional - if not provided, will use AWS credential chain (environment variables, IAM roles, etc.)
+    /// </summary>
+    [AutoResolve]
+    public string? AWSAccessKey { get; set; }
 
-        [AutoResolve]
-        public string AWSAccessKey { get; set; }
+    /// <summary>
+    /// SQS Queue URL (required)
+    /// </summary>
+    [AutoResolve]
+    public string QueueUrl { get; set; } = string.Empty;
 
-        [AutoResolve]
-        public string QueueUrl { get; set; }
-    }
+    /// <summary>
+    /// AWS Region override. Optional - if not provided, will extract from QueueUrl
+    /// </summary>
+    [AutoResolve]
+    public string? Region { get; set; }
 }

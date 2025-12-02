@@ -1,30 +1,29 @@
 ﻿
-namespace Azure.Functions.Extensions.SQS
+namespace Azure.Functions.Extensions.SQS;
+
+using System;
+using System.Threading.Tasks;
+using Amazon.SQS.Model;
+using Microsoft.Azure.WebJobs.Host.Bindings;
+
+public class SqsQueueMessageValueProvider : IValueProvider
 {
-    using System;
-    using System.Threading.Tasks;
-    using Amazon.SQS.Model;
-    using Microsoft.Azure.WebJobs.Host.Bindings;
+    private readonly object _value;
 
-    public class SqsQueueMessageValueProvider : IValueProvider
+    public Type Type => typeof(Message);
+
+    public SqsQueueMessageValueProvider(object value)
     {
-        private object Value { get; set; }
+        _value = value ?? throw new ArgumentNullException(nameof(value));
+    }
 
-        public Type Type => typeof(Message);
+    public Task<object> GetValueAsync()
+    {
+        return Task.FromResult(_value);
+    }
 
-        public SqsQueueMessageValueProvider(object value)
-        {
-            this.Value = value;
-        }
-
-        public Task<object> GetValueAsync()
-        {
-            return Task.FromResult(this.Value);
-        }
-
-        public string ToInvokeString()
-        {
-            return this.Value.ToString();
-        }
+    public string ToInvokeString()
+    {
+        return _value.ToString() ?? string.Empty;
     }
 }

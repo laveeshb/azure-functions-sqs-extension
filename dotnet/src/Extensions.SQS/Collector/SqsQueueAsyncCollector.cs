@@ -1,34 +1,48 @@
 ﻿
-namespace Azure.Functions.Extensions.SQS
+namespace Azure.Functions.Extensions.SQS;
+
+using System;
+using System.Threading;
+using System.Threading.Tasks;
+using Amazon.SQS;
+using Amazon.SQS.Model;
+using Microsoft.Azure.WebJobs;
+
+public class SqsQueueAsyncCollector : IAsyncCollector<SendMessageRequest>, IDisposable
 {
-    using System.Threading;
-    using System.Threading.Tasks;
-    using Amazon.SQS;
-    using Amazon.SQS.Model;
-    using Microsoft.Azure.WebJobs;
+    private readonly AmazonSQSClient _amazonSqsClient;
+    private readonly SqsQueueOutAttribute _sqsQueueOut;
+    private bool _disposed;
 
-    public class SqsQueueAsyncCollector : IAsyncCollector<SendMessageRequest>
+    public SqsQueueAsyncCollector(SqsQueueOutAttribute sqsQueueOut)
     {
-        private AmazonSQSClient AmazonSQSClient { get; set; }
+        _sqsQueueOut = sqsQueueOut ?? throw new ArgumentNullException(nameof(sqsQueueOut));
+        _amazonSqsClient = AmazonSQSClientFactory.Build(sqsQueueOut);
+    }
 
-        private SqsQueueOutAttribute SqsQueueOut { get; set; }
+    public async Task AddAsync(SendMessageRequest request, CancellationToken cancellationToken = default)
+    {
+        if (_disposed)
+            throw new ObjectDisposedException(nameof(SqsQueueAsyncCollector));
 
-        public SqsQueueAsyncCollector(SqsQueueOutAttribute sqsQueueOut)
-        {
-            this.SqsQueueOut = sqsQueueOut;
-            this.AmazonSQSClient = AmazonSQSClientFactory.Build(sqsQueueOut);
-        }
+        ArgumentNullException.ThrowIfNull(request);
 
-        public async Task AddAsync(SendMessageRequest request, CancellationToken cancellationToken = new CancellationToken())
-        {
-            request.QueueUrl = request.QueueUrl ?? SqsQueueOut.QueueUrl; 
-            await AmazonSQSClient.SendMessageAsync(request, cancellationToken);
-        }
+        request.QueueUrl ??= _sqsQueueOut.QueueUrl;
+        await _amazonSqsClient.SendMessageAsync(request, cancellationToken);
+    }
 
-        public Task FlushAsync(CancellationToken cancellationToken = new CancellationToken())
-        {
-            // Batching not supported.
-            return Task.CompletedTask;
-        }
+    public Task FlushAsync(CancellationToken cancellationToken = default)
+    {
+        // Batching not supported - messages are sent immediately in AddAsync
+        return Task.CompletedTask;
+    }
+
+    public void Dispose()
+    {
+        if (_disposed)
+            return;
+
+        _amazonSqsClient?.Dispose();
+        _disposed = true;
     }
 }

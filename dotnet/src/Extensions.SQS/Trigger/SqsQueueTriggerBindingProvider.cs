@@ -1,46 +1,52 @@
 ﻿
-namespace Azure.Functions.Extensions.SQS
+namespace Azure.Functions.Extensions.SQS;
+
+using System;
+using System.Reflection;
+using System.Threading.Tasks;
+using Microsoft.Azure.WebJobs;
+using Microsoft.Azure.WebJobs.Host;
+using Microsoft.Azure.WebJobs.Host.Triggers;
+using Microsoft.Extensions.Options;
+
+public class SqsQueueTriggerBindingProvider : ITriggerBindingProvider
 {
-    using System.Reflection;
-    using System.Threading.Tasks;
-    using Microsoft.Azure.WebJobs;
-    using Microsoft.Azure.WebJobs.Host;
-    using Microsoft.Azure.WebJobs.Host.Triggers;
-    using Microsoft.Extensions.Options;
+    private readonly IOptions<SqsQueueOptions> _sqsQueueOptions;
+    private readonly INameResolver _nameResolver;
 
-    public class SqsQueueTriggerBindingProvider : ITriggerBindingProvider
+    public SqsQueueTriggerBindingProvider(IOptions<SqsQueueOptions> sqsQueueOptions, INameResolver nameResolver)
     {
-        private IOptions<SqsQueueOptions> SqsQueueOptions { get; set; }
+        _sqsQueueOptions = sqsQueueOptions ?? throw new ArgumentNullException(nameof(sqsQueueOptions));
+        _nameResolver = nameResolver ?? throw new ArgumentNullException(nameof(nameResolver));
+    }
 
-        private INameResolver NameResolver { get; set; }
+    public Task<ITriggerBinding?> TryCreateAsync(TriggerBindingProviderContext context)
+    {
+        var triggerAttribute = context.Parameter.GetCustomAttribute<SqsQueueTriggerAttribute>(inherit: false);
+        return triggerAttribute is null
+            ? Task.FromResult<ITriggerBinding?>(null)
+            : Task.FromResult<ITriggerBinding?>(new SqsQueueTriggerBinding(
+                parameterInfo: context.Parameter, 
+                triggerParameters: ResolveTriggerParameters(triggerAttribute), 
+                sqsQueueOptions: _sqsQueueOptions));
+    }
 
-        public SqsQueueTriggerBindingProvider(IOptions<SqsQueueOptions> sqsQueueOptions, INameResolver nameResolver)
+    private SqsQueueTriggerAttribute ResolveTriggerParameters(SqsQueueTriggerAttribute triggerAttribute)
+    {
+        return new SqsQueueTriggerAttribute
         {
-            this.SqsQueueOptions = sqsQueueOptions;
-            this.NameResolver = nameResolver;
-        }
+            AWSKeyId = Resolve(triggerAttribute.AWSKeyId),
+            AWSAccessKey = Resolve(triggerAttribute.AWSAccessKey),
+            QueueUrl = Resolve(triggerAttribute.QueueUrl) ?? triggerAttribute.QueueUrl,
+            Region = Resolve(triggerAttribute.Region)
+        };
+    }
 
-        public Task<ITriggerBinding> TryCreateAsync(TriggerBindingProviderContext context)
-        {
-            var triggerAttribute = context.Parameter.GetCustomAttribute<SqsQueueTriggerAttribute>(inherit: false);
-            return triggerAttribute is null
-                ? Task.FromResult<ITriggerBinding>(null)
-                : Task.FromResult<ITriggerBinding>(new SqsQueueTriggerBinding(parameterInfo: context.Parameter, triggerParameters: this.ResolveTriggerParameters(triggerAttribute), sqsQueueOptions: this.SqsQueueOptions));
-        }
+    private string? Resolve(string? property)
+    {
+        if (string.IsNullOrEmpty(property))
+            return property;
 
-        private SqsQueueTriggerAttribute ResolveTriggerParameters(SqsQueueTriggerAttribute triggerAttribute)
-        {
-            return new SqsQueueTriggerAttribute
-            {
-                AWSKeyId = this.Resolve(triggerAttribute.AWSKeyId),
-                AWSAccessKey = this.Resolve(triggerAttribute.AWSAccessKey),
-                QueueUrl = this.Resolve(triggerAttribute.QueueUrl),
-            };
-        }
-
-        private string Resolve(string property)
-        {
-            return this.NameResolver.Resolve(property) ?? this.NameResolver.ResolveWholeString(property) ?? property;
-        }
+        return _nameResolver.Resolve(property) ?? _nameResolver.ResolveWholeString(property) ?? property;
     }
 }
