@@ -4,7 +4,7 @@ set -e
 # Script to build Azure Functions SQS Extensions
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-DOTNET_DIR="$SCRIPT_DIR/dotnet"
+DOTNET_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 # Default options
 CONFIGURATION="Debug"

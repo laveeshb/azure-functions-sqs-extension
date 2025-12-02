@@ -37,12 +37,19 @@ echo "✅ LocalStack is ready!"
 # Create test queues
 echo "📝 Creating SQS test queues..."
 
-# Standard queue
+# Input queue
 aws --endpoint-url=http://localhost:4566 sqs create-queue \
     --queue-name test-queue \
     --region us-east-1 \
     --no-cli-pager \
-    2>/dev/null || echo "   Queue 'test-queue' may already exist"
+    > /dev/null 2>&1 && echo "   ✓ Created 'test-queue'" || echo "   ℹ Queue 'test-queue' already exists"
+
+# Output queue
+aws --endpoint-url=http://localhost:4566 sqs create-queue \
+    --queue-name test-output-queue \
+    --region us-east-1 \
+    --no-cli-pager \
+    > /dev/null 2>&1 && echo "   ✓ Created 'test-output-queue'" || echo "   ℹ Queue 'test-output-queue' already exists"
 
 # FIFO queue
 aws --endpoint-url=http://localhost:4566 sqs create-queue \
@@ -50,14 +57,14 @@ aws --endpoint-url=http://localhost:4566 sqs create-queue \
     --attributes FifoQueue=true \
     --region us-east-1 \
     --no-cli-pager \
-    2>/dev/null || echo "   Queue 'test-queue.fifo' may already exist"
+    > /dev/null 2>&1 && echo "   ✓ Created 'test-queue.fifo'" || echo "   ℹ Queue 'test-queue.fifo' already exists"
 
 # Dead letter queue
 aws --endpoint-url=http://localhost:4566 sqs create-queue \
     --queue-name test-dlq \
     --region us-east-1 \
     --no-cli-pager \
-    2>/dev/null || echo "   Queue 'test-dlq' may already exist"
+    > /dev/null 2>&1 && echo "   ✓ Created 'test-dlq'" || echo "   ℹ Queue 'test-dlq' already exists"
 
 echo ""
 echo "✅ LocalStack SQS setup complete!"
