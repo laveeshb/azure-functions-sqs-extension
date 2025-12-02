@@ -71,7 +71,7 @@ public void Run([SqsQueueTrigger("test-queue")] string message)
 ### 4. Start Your Function App
 
 ```bash
-cd samples/Extensions.SQS.Sample.v3  # or v2 for in-process
+cd test/Extensions.SQS.Test.Isolated  # or Extensions.SQS.Test.InProcess
 func start
 ```
 

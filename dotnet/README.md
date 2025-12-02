@@ -7,7 +7,7 @@ Azure Functions bindings for Amazon Simple Queue Service (SQS) supporting both i
 ```
 dotnet/
 ├── src/              # Source code for both SDK packages
-├── samples/          # Sample applications (v2 and v3)
+├── test/             # Test projects and sample applications
 ├── scripts/          # Build, test, and setup scripts
 ├── localstack/       # LocalStack testing infrastructure & documentation
 ├── README.md         # Main documentation
@@ -371,7 +371,7 @@ No AWS credentials needed! LocalStack provides a local AWS environment:
 # See localstack/README.md for configuration details
 
 # 3. Start your function app
-cd samples/Extensions.SQS.Sample.v3
+cd test/Extensions.SQS.Test.Isolated
 func start
 
 # 4. Send test messages

@@ -113,5 +113,5 @@ echo ""
 echo "Next steps:"
 echo "  Run tests: ./scripts/ci-test.sh"
 if [ "$CREATE_PACKAGE" = false ]; then
-    echo "  Create packages: ./build.sh -c Release -p"
+    echo "  Create packages: ./scripts/build.sh -c Release -p"
 fi

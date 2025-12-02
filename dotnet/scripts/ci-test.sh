@@ -54,7 +54,7 @@ while [[ $# -gt 0 ]]; do
             shift 2
             ;;
         -h|--help)
-            echo "Usage: ./test.sh [OPTIONS]"
+            echo "Usage: ./ci-test.sh [OPTIONS]"
             echo ""
             echo "Options:"
             echo "  --inprocess-only                     Run only in-process (WebJobs) tests"
@@ -259,7 +259,7 @@ echo "      They require AWS credentials and SQS queues to be configured."
 echo ""
 if [ -z "$AWS_ACCESS_KEY_ID" ] || [ -z "$SQS_QUEUE_URL" ]; then
     echo "Quick start - provide credentials and queue URL:"
-    echo "  ./test.sh \\"
+    echo "  ./ci-test.sh \\"
     echo "    --aws-access-key-id AKIA... \\"
     echo "    --aws-secret-access-key ... \\"
     echo "    --queue-url https://sqs.us-east-1.amazonaws.com/123/my-queue \\"

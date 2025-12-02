@@ -124,7 +124,7 @@ jobs:
           ### Links
           
           - [Documentation](https://github.com/laveeshb/azure-functions-sqs-extension/blob/main/dotnet/README.md)
-          - [Migration Guide](https://github.com/laveeshb/azure-functions-sqs-extension/blob/main/dotnet/MIGRATION_TO_ISOLATED_WORKER.md)
+          - [Migration Guide](https://github.com/laveeshb/azure-functions-sqs-extension/blob/main/dotnet/MIGRATION_GUIDE.md)
           - [NuGet - In-Process](https://www.nuget.org/packages/Azure.WebJobs.Extensions.SQS/${{ inputs.version }})
           - [NuGet - Isolated Worker](https://www.nuget.org/packages/Azure.Functions.Worker.Extensions.SQS/${{ inputs.version }})
         draft: false
