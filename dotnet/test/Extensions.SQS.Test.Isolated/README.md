@@ -159,4 +159,5 @@ Extensions.SQS.Sample/
 
 - [Amazon SQS Documentation](https://docs.aws.amazon.com/sqs/)
 - [Azure Functions Documentation](https://docs.microsoft.com/azure/azure-functions/)
-- [Extension Source Code](../../src/Extensions.SQS/)
+- [Isolated Worker Extension Source Code](../../src/Azure.Functions.Worker.Extensions.SQS/)
+- [In-Process Extension Source Code](../../src/Azure.WebJobs.Extensions.SQS/)
