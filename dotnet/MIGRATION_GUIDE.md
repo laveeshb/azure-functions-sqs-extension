@@ -32,7 +32,7 @@ Migrating from `AzureFunctions.Extension.SQS` (v2.x/v3.x) to `Extensions.Azure.W
 <PackageReference Include="AzureFunctions.Extension.SQS" Version="3.0.0" />
 
 <!-- Add new package -->
-<PackageReference Include="Extensions.Azure.Functions.Worker.SQS" Version="1.0.0" />
+<PackageReference Include="Extensions.Azure.WebJobs.SQS" Version="1.0.0" />
 ```
 
 #### 2. Update Namespace
