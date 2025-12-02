@@ -111,25 +111,25 @@ jobs:
         body: |
           ## NuGet Packages Published
           
-          ${{ inputs.publish-inprocess && '✅ Azure.Extensions.WebJobs.SQS v${{ inputs.version }}' || '' }}
-          ${{ inputs.publish-isolated && '✅ Azure.Extensions.Functions.SQS v${{ inputs.version }}' || '' }}
+          ${{ inputs.publish-inprocess && '✅ Extensions.Azure.WebJobs.SQS v${{ inputs.version }}' || '' }}
+          ${{ inputs.publish-isolated && '✅ Extensions.Azure.Functions.Worker.SQS v${{ inputs.version }}' || '' }}
           
           ### Installation
           
           ```bash
           # In-Process Model
-          dotnet add package Azure.Extensions.WebJobs.SQS --version ${{ inputs.version }}
+          dotnet add package Extensions.Azure.WebJobs.SQS --version ${{ inputs.version }}
           
           # Isolated Worker Model (Recommended)
-          dotnet add package Azure.Extensions.Functions.SQS --version ${{ inputs.version }}
+          dotnet add package Extensions.Azure.Functions.Worker.SQS --version ${{ inputs.version }}
           ```
           
           ### Links
           
           - [Documentation](https://github.com/laveeshb/azure-functions-sqs-extension/blob/main/dotnet/README.md)
           - [Migration Guide](https://github.com/laveeshb/azure-functions-sqs-extension/blob/main/dotnet/MIGRATION_GUIDE.md)
-          - [NuGet - In-Process](https://www.nuget.org/packages/Azure.Extensions.WebJobs.SQS/${{ inputs.version }})
-          - [NuGet - Isolated Worker](https://www.nuget.org/packages/Azure.Extensions.Functions.SQS/${{ inputs.version }})
+          - [NuGet - In-Process](https://www.nuget.org/packages/Extensions.Azure.WebJobs.SQS/${{ inputs.version }})
+          - [NuGet - Isolated Worker](https://www.nuget.org/packages/Extensions.Azure.Functions.Worker.SQS/${{ inputs.version }})
         draft: false
         prerelease: ${{ contains(inputs.version, '-') }}
         files: ./packages/*.nupkg
