@@ -24,16 +24,15 @@ docker-compose -f "$LOCALSTACK_DIR/docker-compose.localstack.yml" up -d
 echo "⏳ Waiting for LocalStack to be ready..."
 timeout=30
 counter=0
-until curl -s http://localhost:4566/_localstack/health | grep -q '"sqs": "available"' || [ $counter -eq $timeout ]; do
+until curl -s http://localhost:4566/_localstack/health 2>/dev/null | grep -qE '"sqs": "(available|running)"'; do
+    if [ $counter -eq $timeout ]; then
+        echo "❌ Error: LocalStack failed to start within $timeout seconds"
+        exit 1
+    fi
     echo "   Waiting... ($counter/$timeout seconds)"
     sleep 1
-    ((counter++))
+    counter=$((counter + 1))
 done
-
-if [ $counter -eq $timeout ]; then
-    echo "❌ Error: LocalStack failed to start within $timeout seconds"
-    exit 1
-fi
 
 echo "✅ LocalStack is ready!"
 
