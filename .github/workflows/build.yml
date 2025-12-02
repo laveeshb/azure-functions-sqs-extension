@@ -33,6 +33,8 @@ jobs:
       run: |
         dotnet restore dotnet/src/Azure.WebJobs.Extensions.SQS/Azure.WebJobs.Extensions.SQS.csproj
         dotnet restore dotnet/src/Azure.Functions.Worker.Extensions.SQS/Azure.Functions.Worker.Extensions.SQS.csproj
+        dotnet restore dotnet/test/Extensions.SQS.Test.InProcess/Extensions.SQS.Test.InProcess.csproj
+        dotnet restore dotnet/test/Extensions.SQS.Test.Isolated/Extensions.SQS.Test.Isolated.csproj
     
     - name: Build In-Process SDK
       run: dotnet build dotnet/src/Azure.WebJobs.Extensions.SQS/Azure.WebJobs.Extensions.SQS.csproj --configuration Release --no-restore
