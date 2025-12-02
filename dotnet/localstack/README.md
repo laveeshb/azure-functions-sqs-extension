@@ -6,14 +6,21 @@ This directory contains tools for testing the Azure Functions SQS Extension with
 
 - Docker and Docker Compose installed
 - AWS CLI installed (`aws --version`)
-- Bash shell (Linux/macOS/WSL on Windows)
+- **Linux/macOS:** Bash shell
+- **Windows:** PowerShell 5.1+ or PowerShell Core
 
 ## Quick Start
 
 ### 1. Start LocalStack
 
+**Linux/macOS:**
 ```bash
-./localstack/setup-localstack.sh
+./localstack/unix/setup-localstack.sh
+```
+
+**Windows:**
+```powershell
+.\localstack\windows\setup-localstack.ps1
 ```
 
 This script will:
@@ -77,34 +84,58 @@ func start
 
 ### 5. Send Test Messages
 
+**Linux/macOS:**
 ```bash
 # Send to default queue (test-queue)
-./localstack/send-test-message.sh
+./localstack/unix/send-test-message.sh
 
 # Send to specific queue
-./localstack/send-test-message.sh test-queue.fifo
+./localstack/unix/send-test-message.sh test-queue.fifo
+```
+
+**Windows:**
+```powershell
+# Send to default queue (test-queue)
+.\localstack\windows\send-test-message.ps1
+
+# Send to specific queue
+.\localstack\windows\send-test-message.ps1 -QueueName test-queue.fifo
 ```
 
 ## Available Scripts
 
-### localstack/setup-localstack.sh
+### Setup LocalStack
 Sets up LocalStack with SQS queues for testing.
 
-**Usage:**
+**Linux/macOS:**
 ```bash
-./localstack/setup-localstack.sh
+./localstack/unix/setup-localstack.sh
 ```
 
-### localstack/send-test-message.sh
+**Windows:**
+```powershell
+.\localstack\windows\setup-localstack.ps1
+```
+
+### Send Test Message
 Sends a test message to a LocalStack SQS queue.
 
-**Usage:**
+**Linux/macOS:**
 ```bash
 # Send to default queue
-./localstack/send-test-message.sh
+./localstack/unix/send-test-message.sh
 
 # Send to specific queue
-./localstack/send-test-message.sh my-queue-name
+./localstack/unix/send-test-message.sh my-queue-name
+```
+
+**Windows:**
+```powershell
+# Send to default queue
+.\localstack\windows\send-test-message.ps1
+
+# Send to specific queue
+.\localstack\windows\send-test-message.ps1 -QueueName my-queue-name
 ```
 
 ## Managing LocalStack

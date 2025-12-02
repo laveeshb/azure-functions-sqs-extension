@@ -50,7 +50,9 @@ dotnet add package Azure.Functions.Worker.Extensions.SQS
 - [AWS CLI](https://aws.amazon.com/cli/) (for AWS or LocalStack)
 - [Docker & Docker Compose](https://www.docker.com/) (for LocalStack testing)
 
-**Quick install:** Run `./scripts/install-prereqs.sh` to install all prerequisites automatically.
+**Quick install:**
+- **Linux/macOS:** `./scripts/unix/install-prereqs.sh`
+- **Windows:** `.\scripts\windows\install-prereqs.ps1`
 
 ## Features
 
@@ -317,11 +319,17 @@ For local development without connecting to AWS, we provide LocalStack integrati
 
 **Quick start:**
 ```bash
-# Start LocalStack with test queues
-./localstack/setup-localstack.sh
+# Linux/macOS: Start LocalStack with test queues
+./localstack/unix/setup-localstack.sh
 
-# Send test messages
-./send-test-message.sh
+# Windows: Start LocalStack with test queues
+.\localstack\windows\setup-localstack.ps1
+
+# Send test messages (Linux/macOS)
+./localstack/unix/send-test-message.sh
+
+# Send test messages (Windows)
+.\localstack\windows\send-test-message.ps1
 ```
 
 ### Local Settings
@@ -365,7 +373,10 @@ No AWS credentials needed! LocalStack provides a local AWS environment:
 
 ```bash
 # 1. Start LocalStack with test queues
-./localstack/setup-localstack.sh
+# Linux/macOS:
+./localstack/unix/setup-localstack.sh
+# Windows:
+.\localstack\windows\setup-localstack.ps1
 
 # 2. Update local.settings.json with LocalStack endpoint
 # See localstack/README.md for configuration details
@@ -375,7 +386,10 @@ cd test/Extensions.SQS.Test.Isolated
 func start
 
 # 4. Send test messages
-./localstack/send-test-message.sh
+# Linux/macOS:
+./localstack/unix/send-test-message.sh
+# Windows:
+.\localstack\windows\send-test-message.ps1
 ```
 
 📖 **Complete guide:** See [LocalStack Testing Guide](./localstack/README.md) for detailed setup and usage.
@@ -393,7 +407,10 @@ Migrating from the older `AzureFunctions.Extension.SQS` package? See the [Migrat
 
 ```bash
 # Build both packages
-./scripts/build.sh -c Release -p
+# Linux/macOS:
+./scripts/unix/build.sh -c Release -p
+# Windows:
+.\scripts\windows\build.ps1 -Configuration Release -Package
 
 # Build specific package
 cd src/Azure.WebJobs.Extensions.SQS
@@ -407,7 +424,10 @@ dotnet build -c Release
 
 ```bash
 # Run test applications
-./scripts/ci-test.sh --queue-url "your-queue-url" --aws-access-key-id "your-key" --aws-secret-access-key "your-secret"
+# Linux/macOS:
+./scripts/unix/ci-test.sh --queue-url "your-queue-url" --aws-access-key-id "your-key" --aws-secret-access-key "your-secret"
+# Windows:
+.\scripts\windows\ci-test.ps1 -QueueUrl "your-queue-url" -AwsAccessKeyId "your-key" -AwsSecretAccessKey "your-secret"
 ```
 
 ## What's New
