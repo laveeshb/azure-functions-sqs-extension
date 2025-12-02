@@ -1,187 +1,329 @@
-# Migration to Isolated Worker Model
+# Migration Guide
 
-## Current State
+This guide helps you migrate between different versions of the Azure Functions SQS Extension.
 
-The Azure Functions SQS Extension (v3.0.0) is currently built using the **WebJobs SDK**, which supports the **in-process model** for Azure Functions. This model is being deprecated by Microsoft, with end-of-support on **November 10, 2026**.
+## Current State (v1.0.0)
 
-### What This Means
+The Azure Functions SQS Extension now provides **two separate packages** to support both hosting models:
 
-- ✅ **Extension works perfectly** with in-process Azure Functions (.NET 6/8)
-- ⚠️ **Not compatible** with isolated worker process model
-- 📅 **In-process model deprecated** - Nov 10, 2026
+| Package | Model | Status | End of Support |
+|---------|-------|--------|----------------|
+| **Azure.WebJobs.Extensions.SQS** | In-process | ✅ Supported | Nov 10, 2026 |
+| **Azure.Functions.Worker.Extensions.SQS** | Isolated worker | ✅ Supported (Recommended) | N/A |
 
-## Why the Isolated Worker Model Requires Significant Changes
+### Which Package Should I Use?
 
-The isolated worker model uses a completely different architecture:
+- **New projects**: Use `Azure.Functions.Worker.Extensions.SQS` (isolated worker model)
+- **Existing in-process apps**: Can continue using `Azure.WebJobs.Extensions.SQS` until Nov 2026
+- **Legacy apps**: Migrate from old `AzureFunctions.Extension.SQS` package
 
-1. **Different SDK**: Uses `Microsoft.Azure.Functions.Worker` instead of `Microsoft.Azure.WebJobs`
-2. **Different Binding System**: Custom bindings require implementing different interfaces
-3. **Different Attribute System**: Attributes must inherit from different base classes
-4. **No IAsyncCollector**: Output bindings work differently (return values or multi-output types)
-5. **Separate Process**: Functions run in a separate process from the host
+## Migration Scenarios
 
-## Migration Options
+### Scenario 1: Legacy Package → In-Process Model
 
-### Option 1: Dual Support (Recommended)
+Migrating from `AzureFunctions.Extension.SQS` (v2.x/v3.x) to `Azure.WebJobs.Extensions.SQS` (v1.x).
 
-Create separate packages:
-- `AzureFunctions.Extension.SQS` (current, in-process) - v3.x
-- `AzureFunctions.Extension.SQS.Worker` (new, isolated worker) - v4.x
+#### 1. Update Package Reference
 
-**Pros:**
-- Supports both models during transition period
-- Users can migrate at their own pace
-- Clear separation of concerns
+```xml
+<!-- Remove old package -->
+<PackageReference Include="AzureFunctions.Extension.SQS" Version="3.0.0" />
 
-**Cons:**
-- Two codebases to maintain
-- More complex release process
-
-### Option 2: Isolated Worker Only
-
-Drop in-process support, focus entirely on isolated worker model.
-
-**Pros:**
-- Single codebase
-- Future-proof immediately
-- Cleaner architecture
-
-**Cons:**
-- Breaking change for existing users
-- Requires immediate migration for all users
-
-### Option 3: Continue In-Process Until 2026
-
-Keep the current implementation, plan migration closer to deprecation date.
-
-**Pros:**
-- More time to plan
-- Existing users not disrupted
-- Can wait for better isolated worker tooling
-
-**Cons:**
-- Still need to migrate eventually
-- Less time to test in production
-
-## What Needs to Change for Isolated Worker
-
-### 1. Project Structure
-```
-dotnet/
-  src/
-    Extensions.SQS/              # In-process (current)
-    Extensions.SQS.Worker/       # Isolated worker (new)
+<!-- Add new package -->
+<PackageReference Include="Azure.WebJobs.Extensions.SQS" Version="1.0.0" />
 ```
 
-### 2. Package Dependencies
-Replace:
-- `Microsoft.Azure.WebJobs` → `Microsoft.Azure.Functions.Worker.Extensions.Abstractions`
-- Remove `IAsyncCollector<T>` patterns
-- Add Worker SDK dependencies
+#### 2. Update Namespace
 
-### 3. Trigger Attribute
 ```csharp
-// Current (WebJobs)
-public class SqsQueueTriggerAttribute : Attribute { }
+// Old
+using Extensions.SQS;
 
-// Isolated Worker
-[AttributeUsage(AttributeTargets.Parameter)]
-public class SqsQueueTriggerAttribute : TriggerBindingAttribute { }
+// New
+using Azure.WebJobs.Extensions.SQS;
 ```
 
-### 4. Trigger Implementation
-- Implement `IInputBindingProvider<TAttribute>`
-- Create converter from SQS message to function parameter
-- Use `FunctionContext` instead of execution context
+#### 3. Update Code (Minimal Changes)
 
-### 5. Output Binding
+**Trigger binding** - mostly compatible:
 ```csharp
-// Current (WebJobs)
-[SqsQueueOut("queue-url")] out SqsQueueMessage message
-
-// Isolated Worker - Return Value
-[Function("SendMessage")]
-[SqsQueueOutput("queue-url")]
-public SqsQueueMessage Run([HttpTrigger] HttpRequest req)
-
-// Isolated Worker - Multi-Output
-public class MyOutputs
+// Old and New - same syntax
+[FunctionName("ProcessMessage")]
+public void Run(
+    [SqsQueueTrigger(QueueUrl = "%SQS_QUEUE_URL%")] Message message,
+    ILogger log)
 {
-    [SqsQueueOutput("queue-url")]
-    public SqsQueueMessage? Message { get; set; }
-    
-    public IActionResult HttpResponse { get; set; }
+    log.LogInformation("Message: {Body}", message.Body);
 }
 ```
 
-### 6. Extension Startup
+**Output binding** - same pattern:
 ```csharp
-// Current (WebJobs)
-[assembly: WebJobsStartup(typeof(SqsExtensionStartup))]
-
-// Isolated Worker
-public static class WorkerExtensions
+// Old and New - same syntax
+[FunctionName("SendMessage")]
+public void Run(
+    [HttpTrigger] HttpRequest req,
+    [SqsQueueOut(QueueUrl = "%SQS_QUEUE_URL%")] out SqsQueueMessage message,
+    ILogger log)
 {
-    public static IHostBuilder ConfigureSqsExtension(this IHostBuilder builder)
+    message = new SqsQueueMessage { Body = "Hello" };
+}
+```
+
+#### 4. Update Configuration (No Changes Needed)
+
+`local.settings.json` and Application Settings remain the same:
+```json
+{
+  "Values": {
+    "AWS_ACCESS_KEY_ID": "your-key",
+    "AWS_SECRET_ACCESS_KEY": "your-secret",
+    "AWS_REGION": "us-east-1",
+    "SQS_QUEUE_URL": "https://sqs.us-east-1.amazonaws.com/..."
+  }
+}
+```
+
+### Scenario 2: Legacy Package → Isolated Worker Model (Recommended)
+
+Migrating from `AzureFunctions.Extension.SQS` to `Azure.Functions.Worker.Extensions.SQS`.
+
+#### 1. Update Project File
+
+```xml
+<!-- Change target framework if needed -->
+<TargetFramework>net8.0</TargetFramework>
+<AzureFunctionsVersion>v4</AzureFunctionsVersion>
+
+<!-- Remove old packages -->
+<PackageReference Include="AzureFunctions.Extension.SQS" Version="3.0.0" />
+<PackageReference Include="Microsoft.Azure.WebJobs" Version="3.0.41" />
+<PackageReference Include="Microsoft.NET.Sdk.Functions" Version="4.x.x" />
+
+<!-- Add isolated worker packages -->
+<PackageReference Include="Azure.Functions.Worker.Extensions.SQS" Version="1.0.0" />
+<PackageReference Include="Microsoft.Azure.Functions.Worker" Version="1.23.0" />
+<PackageReference Include="Microsoft.Azure.Functions.Worker.Sdk" Version="1.18.1" />
+```
+
+#### 2. Update Program.cs
+
+Create/update `Program.cs` for isolated worker:
+```csharp
+using Microsoft.Azure.Functions.Worker;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Amazon.SQS;
+
+var host = new HostBuilder()
+    .ConfigureFunctionsWebApplication()
+    .ConfigureServices(services =>
     {
-        builder.ConfigureFunctionsWorkerDefaults(worker =>
+        services.AddApplicationInsightsTelemetryWorkerService();
+        services.ConfigureFunctionsApplicationInsights();
+        
+        // Register AWS SQS client
+        services.AddSingleton<IAmazonSQS>(sp => new AmazonSQSClient());
+    })
+    .Build();
+
+host.Run();
+```
+
+#### 3. Update Namespaces
+
+```csharp
+// Remove
+using Microsoft.Azure.WebJobs;
+using Microsoft.Azure.WebJobs.Extensions.Http;
+
+// Add
+using Microsoft.Azure.Functions.Worker;
+using Microsoft.Azure.Functions.Worker.Http;
+using Azure.Functions.Worker.Extensions.SQS;
+```
+
+#### 4. Update Function Code
+
+**Trigger binding:**
+```csharp
+// OLD (In-Process)
+[FunctionName("ProcessMessage")]
+public void Run(
+    [SqsQueueTrigger(QueueUrl = "%SQS_QUEUE_URL%")] Message message,
+    ILogger log)
+{
+    log.LogInformation("Message: {Body}", message.Body);
+}
+
+// NEW (Isolated Worker)
+[Function("ProcessMessage")]
+public void Run(
+    [SqsTrigger(QueueUrl = "%SQS_QUEUE_URL%")] Message message,
+    FunctionContext context)
+{
+    var logger = context.GetLogger("ProcessMessage");
+    logger.LogInformation("Message: {Body}", message.Body);
+}
+```
+
+**Output binding:**
+```csharp
+// OLD (In-Process)
+[FunctionName("SendMessage")]
+public void Run(
+    [HttpTrigger(AuthorizationLevel.Anonymous)] HttpRequest req,
+    [SqsQueueOut(QueueUrl = "%SQS_QUEUE_URL%")] out SqsQueueMessage message)
+{
+    message = new SqsQueueMessage { Body = "Hello" };
+}
+
+// NEW (Isolated Worker) - Use IAmazonSQS directly
+public class SqsFunctions
+{
+    private readonly IAmazonSQS _sqsClient;
+
+    public SqsFunctions(IAmazonSQS sqsClient)
+    {
+        _sqsClient = sqsClient;
+    }
+
+    [Function("SendMessage")]
+    public async Task<HttpResponseData> Run(
+        [HttpTrigger(AuthorizationLevel.Anonymous, "post")] HttpRequestData req)
+    {
+        var queueUrl = Environment.GetEnvironmentVariable("SQS_QUEUE_URL");
+        
+        await _sqsClient.SendMessageAsync(new SendMessageRequest
         {
-            worker.Services.AddSingleton<ISqsQueueTriggerBindingProvider>();
+            QueueUrl = queueUrl,
+            MessageBody = "Hello"
         });
-        return builder;
+
+        return req.CreateResponse(HttpStatusCode.OK);
     }
 }
 ```
 
-## Recommended Path Forward
+#### 5. Update host.json
 
-### Phase 1: Document Current State ✅
-- ✅ Update README to clarify in-process model support
-- ✅ Add this migration guide
-- ✅ Create in-process test sample
+```json
+{
+  "version": "2.0",
+  "logging": {
+    "applicationInsights": {
+      "samplingSettings": {
+        "isEnabled": true,
+        "maxTelemetryItemsPerSecond": 20
+      }
+    }
+  }
+}
+```
 
-### Phase 2: Test In-Process Implementation (Next Step)
-- Create simple in-process test app
-- Verify trigger and output bindings work
-- Publish v3.0.0 with in-process support
+#### 6. Update local.settings.json
 
-### Phase 3: Plan Isolated Worker (Future)
-- Decide on dual support vs. isolated-only
-- Create detailed implementation plan
-- Set up new project structure
+```json
+{
+  "IsEncrypted": false,
+  "Values": {
+    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+    "FUNCTIONS_WORKER_RUNTIME": "dotnet-isolated",
+    "AWS_ACCESS_KEY_ID": "your-key",
+    "AWS_SECRET_ACCESS_KEY": "your-secret",
+    "AWS_REGION": "us-east-1",
+    "SQS_QUEUE_URL": "https://sqs.us-east-1.amazonaws.com/..."
+  }
+}
+```
 
-### Phase 4: Implement Isolated Worker (Major Effort)
-- Implement new binding system
-- Create comprehensive tests
-- Update documentation
-- Release v4.0.0
+### Scenario 3: In-Process → Isolated Worker
 
-## Timeline Recommendation
+Migrating from `Azure.WebJobs.Extensions.SQS` to `Azure.Functions.Worker.Extensions.SQS`.
 
-- **Now - Q1 2025**: Release v3.0.0 (in-process, modernized dependencies)
-- **Q2-Q3 2025**: Implement and test isolated worker support
-- **Q4 2025**: Release v4.0.0 (isolated worker)
-- **2026**: Support both models until Nov 2026 deadline
-- **Post Nov 2026**: Isolated worker only
+Follow the same steps as **Scenario 2**, but:
+- Start with simpler namespace changes
+- Project structure is already modern
+- Main changes are in function signatures and DI setup
 
-## Testing the Current Extension
+## Key Differences Between Models
 
-To test the current in-process extension:
+| Feature | In-Process | Isolated Worker |
+|---------|------------|-----------------|
+| **Package** | Azure.WebJobs.Extensions.SQS | Azure.Functions.Worker.Extensions.SQS |
+| **Trigger Attribute** | `[SqsQueueTrigger]` | `[SqsTrigger]` |
+| **Output Attribute** | `[SqsQueueOut]` with `out` parameter | Use `IAmazonSQS` directly |
+| **Function Attribute** | `[FunctionName]` | `[Function]` |
+| **Logging** | `ILogger` parameter | `FunctionContext.GetLogger()` |
+| **HTTP Trigger** | `HttpRequest` | `HttpRequestData` |
+| **HTTP Response** | `IActionResult` | `HttpResponseData` |
+| **Dependency Injection** | Constructor or method injection | Constructor injection only |
+| **Runtime** | Same process as host | Separate process |
 
-1. Create a new in-process Functions app
-2. Reference the extension
-3. Use WebJobs-style attributes
-4. Run with Azure Functions v4 runtime
+## Testing After Migration
 
-See the samples in `dotnet/test/` for working examples.
+### 1. Local Testing
+
+```bash
+# In-process
+cd test/Extensions.SQS.Test.InProcess
+func start
+
+# Isolated worker
+cd test/Extensions.SQS.Test.Isolated
+func start
+```
+
+### 2. Verify Trigger
+
+Send a test message to your SQS queue:
+```bash
+aws sqs send-message \
+  --queue-url "your-queue-url" \
+  --message-body "Test message"
+```
+
+### 3. Verify Output
+
+Check your function logs and output queue for sent messages.
+
+## Troubleshooting
+
+### Issue: Function not triggering
+
+**Solution:**
+- Verify AWS credentials in Application Settings
+- Check queue URL is correct
+- Ensure IAM permissions allow `sqs:ReceiveMessage`, `sqs:DeleteMessage`
+- Check function app logs for errors
+
+### Issue: "Attribute not found" error
+
+**Solution:**
+- In-process: Use `[SqsQueueTrigger]` and `[SqsQueueOut]`
+- Isolated worker: Use `[SqsTrigger]`, no output attribute (use `IAmazonSQS`)
+
+### Issue: DI not working in isolated worker
+
+**Solution:**
+- Ensure `IAmazonSQS` is registered in `Program.cs`:
+  ```csharp
+  services.AddSingleton<IAmazonSQS>(sp => new AmazonSQSClient());
+  ```
+
+## Timeline Recommendations
+
+- **2024-2025**: Migrate to isolated worker model for new projects
+- **By Q4 2025**: Plan migration for existing in-process apps
+- **By Nov 2026**: Complete migration (in-process model end-of-support)
 
 ## Resources
 
-- [Azure Functions Isolated Worker Guide](https://learn.microsoft.com/en-us/azure/azure-functions/dotnet-isolated-process-guide)
-- [Migrate to Isolated Worker](https://learn.microsoft.com/en-us/azure/azure-functions/migrate-dotnet-to-isolated-model)
-- [Custom Bindings in Isolated Worker](https://github.com/Azure/azure-functions-dotnet-worker/wiki/Custom-Bindings)
-- [In-Process Model Retirement Announcement](https://aka.ms/azure-functions-retirements/in-process-model)
+- [In-Process Package README](./src/Azure.WebJobs.Extensions.SQS/README.md)
+- [Isolated Worker Package README](./src/Azure.Functions.Worker.Extensions.SQS/README.md)
+- [Azure Functions Isolated Worker Guide](https://learn.microsoft.com/azure/azure-functions/dotnet-isolated-process-guide)
+- [Migrate to Isolated Worker (Microsoft Docs)](https://learn.microsoft.com/azure/azure-functions/migrate-dotnet-to-isolated-model)
 
-## Questions?
+## Need Help?
 
-Open an issue on GitHub to discuss the migration strategy or ask questions about isolated worker support.
+Open an issue on [GitHub](https://github.com/laveeshb/azure-functions-sqs-extension/issues) for migration assistance.
