@@ -100,7 +100,7 @@ Complete modernization of the Azure Functions SQS Extension to latest .NET and A
 [SqsQueueTrigger(
     AWSKeyId = "AKIAIOSFODNN7EXAMPLE",
     AWSAccessKey = "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
-    QueueUrl = "https://sqs.us-east-1.amazonaws.com/123456789/my-queue")]
+    QueueUrl = "https://sqs.us-east-1.amazonaws.com/123456789012/my-queue")]
 
 // New (v3.x) - Using credential chain (recommended)
 [SqsQueueTrigger(
