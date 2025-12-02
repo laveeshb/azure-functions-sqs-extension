@@ -325,7 +325,7 @@ func start
 
 ## Migration Guide
 
-Migrating from the older `AzureFunctions.Extension.SQS` package? See the [Migration Guide](../MIGRATION_TO_ISOLATED_WORKER.md) for detailed instructions.
+Migrating from the older `AzureFunctions.Extension.SQS` package? See the [Migration Guide](./MIGRATION_TO_ISOLATED_WORKER.md) for detailed instructions.
 
 ## Building from Source
 

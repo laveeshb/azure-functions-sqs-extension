@@ -256,7 +256,7 @@ using Azure.WebJobs.Extensions.SQS;
 
 ### To Isolated Worker Model
 
-If you want to migrate to the **recommended** isolated worker model, use `Azure.Functions.Worker.Extensions.SQS` instead. See the [migration guide](https://github.com/laveeshb/azure-functions-sqs-extension/blob/main/MIGRATION_TO_ISOLATED_WORKER.md).
+If you want to migrate to the **recommended** isolated worker model, use `Azure.Functions.Worker.Extensions.SQS` instead. See the [migration guide](https://github.com/laveeshb/azure-functions-sqs-extension/blob/main/dotnet/MIGRATION_TO_ISOLATED_WORKER.md).
 
 ## Troubleshooting
 
