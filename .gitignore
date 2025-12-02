@@ -1,0 +1,6 @@
+
+# Build artifacts
+bin/
+obj/
+*.nupkg
+*.snupkg

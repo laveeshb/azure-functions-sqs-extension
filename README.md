@@ -1,58 +1,54 @@
-# Azure Functions - Amazon SQS Extension
+# ⚡ Azure Functions - Amazon SQS Extension
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+![6.0 | 8.0](https://img.shields.io/badge/6.0%20|%208.0-512BD4?logo=dotnet&logoColor=white)
+[![NuGet - In-Process](https://img.shields.io/nuget/v/Azure.WebJobs.Extensions.SQS.svg?label=Azure.WebJobs.Extensions.SQS)](https://www.nuget.org/packages/Azure.WebJobs.Extensions.SQS)
+[![NuGet - Isolated Worker](https://img.shields.io/nuget/v/Azure.Functions.Worker.Extensions.SQS.svg?label=Azure.Functions.Worker.Extensions.SQS)](https://www.nuget.org/packages/Azure.Functions.Worker.Extensions.SQS)
 
-Multi-language Azure Functions bindings for Amazon Simple Queue Service (SQS).
+Multi-language [Azure Functions](https://learn.microsoft.com/azure/azure-functions/) bindings for Amazon Simple Queue Service (SQS). 🔗
 
-## Overview
+## 📋 Overview
 
-This repository provides Azure Functions extensions to integrate with [Amazon SQS](https://aws.amazon.com/sqs/) across multiple programming languages. Trigger functions based on SQS queue messages or send messages to SQS queues from your Azure Functions.
+This repository provides Azure Functions extensions to integrate with [Amazon SQS](https://aws.amazon.com/sqs/) across multiple programming languages. Trigger functions based on SQS queue messages or send messages to SQS queues from your Azure Functions. 🚀
 
-## Supported Languages
+## 🌐 Supported Languages
 
-- ✅ **.NET** - Full support with trigger and output bindings
-- 🚧 **Python** - Coming soon
-- 🚧 **Java** - Coming soon
-- 🚧 **JavaScript/TypeScript** - Coming soon
+| Language | Status | Documentation |
+|----------|--------|---------------|
+| **.NET** | ✅ Available | [Documentation](./dotnet/README.md) |
+| **Python** | 🚧 Coming soon | - |
+| **Java** | 🚧 Coming soon | - |
+| **JavaScript/TypeScript** | 🚧 Coming soon | - |
 
-## .NET Extension
+## 🔧 .NET Extension
 
-### Installation
+For .NET developers, this extension provides two packages supporting both hosting models:
 
-```bash
-dotnet add package AzureFunctions.Extension.SQS
-```
+- **[Azure.WebJobs.Extensions.SQS](./dotnet/src/Azure.WebJobs.Extensions.SQS/README.md)** - In-process hosting model
+- **[Azure.Functions.Worker.Extensions.SQS](./dotnet/src/Azure.Functions.Worker.Extensions.SQS/README.md)** - Isolated worker (out-of-process) model
 
-- [NuGet Package](https://www.nuget.org/packages/AzureFunctions.Extension.SQS)
-- [.NET Documentation](./dotnet/README.md)
-- [Release Notes](https://github.com/laveeshb/azure-functions-sqs-extension/releases)
+**Features:**
+- ⚡ Trigger Azure Functions from SQS queue messages
+- 📤 Send messages to SQS queues from Azure Functions
+- 🎯 Multi-targeting: .NET 6.0 and .NET 8.0
+- 🔐 AWS credential chain support
+- 🔄 Long polling and configurable batch processing
+- 🐳 LocalStack support for local development
 
-### Features
+📖 **[See full .NET documentation](./dotnet/README.md)**
+🧪 **[LocalStack testing guide](./dotnet/localstack/README.md)**
 
-| Binding Type | Description | Example |
-|--------------|-------------|---------|
-| Trigger | Trigger an Azure Function based on messages in an AWS SQS queue | [Sample](./dotnet/samples/Extensions.SQS.Sample.v2/Trigger/QueueMessageTrigger.cs) |
-| Output | Push messages to an AWS SQS queue from your Azure Function | [Sample](./dotnet/samples/Extensions.SQS.Sample.v3/Output/QueueMessageOutput.cs) |
-
-### Authentication
-
-The bindings support AWS credentials through:
-- AWS credentials file
-- Environment variables
-- IAM roles (when running on AWS infrastructure)
-
-## History & Attribution
+## 📜 History & Attribution
 
 This repository is a continuation of the SQS extension originally developed as part of the [azure-function-extensions-net](https://github.com/laveeshb/azure-function-extensions-net) repository. The code has been extracted with full commit history to support multi-language development and focused maintenance.
 
-## Contributing
+## 🤝 Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+Contributions are welcome! Please feel free to submit a Pull Request. 💡
 
-## License
+## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## Support
+## 💬 Support
 
-For issues, questions, or feature requests, please [open an issue](https://github.com/laveeshb/azure-functions-sqs-extension/issues).
+For issues, questions, or feature requests, please [open an issue](https://github.com/laveeshb/azure-functions-sqs-extension/issues). We're here to help! 🙋
