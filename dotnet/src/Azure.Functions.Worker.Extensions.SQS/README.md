@@ -82,6 +82,8 @@ public class SqsFunctions
 
 For isolated worker, use the AWS SDK directly:
 
+> **⚠️ Security Note**: This example uses `AuthorizationLevel.Anonymous` for demonstration purposes only. In production, use `AuthorizationLevel.Function` or higher and require API keys or authentication to prevent unauthorized access.
+
 ```csharp
 using Amazon.SQS;
 using Amazon.SQS.Model;

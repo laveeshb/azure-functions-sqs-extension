@@ -55,6 +55,8 @@ public class SqsFunctions
 
 ### Output Binding Example
 
+> **⚠️ Security Note**: This example uses `AuthorizationLevel.Anonymous` for demonstration purposes only. In production, use `AuthorizationLevel.Function` or higher and require API keys or authentication to prevent unauthorized access.
+
 ```csharp
 using Amazon.SQS.Model;
 using Azure.WebJobs.Extensions.SQS;

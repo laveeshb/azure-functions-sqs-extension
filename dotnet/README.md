@@ -92,6 +92,8 @@ public class SqsFunctions
 
 #### Output Binding
 
+> **⚠️ Security Note**: This example uses `AuthorizationLevel.Anonymous` for demonstration purposes only. In production, use `AuthorizationLevel.Function` or higher and require API keys or authentication to prevent unauthorized access.
+
 ```csharp
 using Azure.WebJobs.Extensions.SQS;
 using Microsoft.Azure.WebJobs;
@@ -143,6 +145,8 @@ public class SqsFunctions
 ```
 
 #### Output Binding
+
+> **⚠️ Security Note**: This example uses `AuthorizationLevel.Anonymous` for demonstration purposes only. In production, use `AuthorizationLevel.Function` or higher and require API keys or authentication to prevent unauthorized access.
 
 ```csharp
 using Azure.Functions.Worker;

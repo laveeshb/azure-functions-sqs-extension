@@ -67,7 +67,7 @@ docker run -p 10000:10000 mcr.microsoft.com/azure-storage/azurite azurite-blob -
 
 ```bash
 # Navigate to the test directory
-cd dotnet/test/Extensions.SQS.Sample
+cd dotnet/test/Extensions.SQS.Test.Isolated
 
 # Run the function app
 func start
