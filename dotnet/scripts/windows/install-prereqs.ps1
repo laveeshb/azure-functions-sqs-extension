@@ -94,23 +94,61 @@ if (Test-CommandExists aws) {
 
 # Install Docker (for LocalStack testing)
 if (Test-CommandExists docker) {
-    $dockerVersion = docker --version
-    Write-Host "✓ Docker already installed: $dockerVersion" -ForegroundColor Green
+    try {
+        docker info | Out-Null
+        $dockerVersion = docker --version
+        Write-Host "✓ Docker already installed and running: $dockerVersion" -ForegroundColor Green
+    } catch {
+        Write-Host "⚠ Docker is installed but not running" -ForegroundColor Yellow
+        Write-Host "  Please start Docker Desktop to use LocalStack" -ForegroundColor Gray
+    }
 } else {
-    $installDocker = Read-Host "Docker not found. Install? (y/n)"
+    $installDocker = Read-Host "Docker not found. Install Docker Desktop for LocalStack testing? (y/n)"
     if ($installDocker -match "^[Yy]$") {
-        Write-Host "Please install Docker Desktop for Windows:" -ForegroundColor Yellow
-        Write-Host "  Download from: https://www.docker.com/products/docker-desktop" -ForegroundColor Cyan
-        Start-Process "https://www.docker.com/products/docker-desktop"
-        Write-Host "⊘ Manual installation required for Docker Desktop" -ForegroundColor Yellow
+        Write-Host "" -ForegroundColor Yellow
+        Write-Host "📦 Installing Docker Desktop for Windows..." -ForegroundColor Cyan
+        Write-Host "" -ForegroundColor Yellow
+        Write-Host "Docker Desktop will be downloaded and installed." -ForegroundColor Gray
+        Write-Host "After installation:" -ForegroundColor Yellow
+        Write-Host "  1. Restart your computer if prompted" -ForegroundColor Gray
+        Write-Host "  2. Start Docker Desktop from the Start menu" -ForegroundColor Gray
+        Write-Host "  3. Wait for Docker to finish starting (check system tray)" -ForegroundColor Gray
+        Write-Host "  4. Re-run this script to verify installation" -ForegroundColor Gray
+        Write-Host "" -ForegroundColor Yellow
+        
+        if (Test-CommandExists winget) {
+            Write-Host "Installing via winget..." -ForegroundColor Yellow
+            try {
+                winget install Docker.DockerDesktop
+                Write-Host "✓ Docker Desktop installed via winget" -ForegroundColor Green
+                Write-Host "⚠ Please restart your computer and start Docker Desktop" -ForegroundColor Yellow
+            } catch {
+                Write-Host "Failed to install via winget. Opening download page..." -ForegroundColor Yellow
+                Start-Process "https://www.docker.com/products/docker-desktop"
+            }
+        } else {
+            Write-Host "Opening Docker Desktop download page..." -ForegroundColor Yellow
+            Write-Host "Please download and run the installer manually." -ForegroundColor Gray
+            Start-Process "https://www.docker.com/products/docker-desktop"
+        }
     } else {
         Write-Host "⊘ Skipping Docker installation" -ForegroundColor Gray
+        Write-Host "  Note: LocalStack requires Docker. You can:" -ForegroundColor Yellow
+        Write-Host "    - Install Docker Desktop later for LocalStack testing" -ForegroundColor Gray
+        Write-Host "    - Use real AWS SQS for testing (requires AWS credentials)" -ForegroundColor Gray
     }
 }
 
 # Check Docker Compose (included with Docker Desktop on Windows)
-if ((Test-CommandExists docker-compose) -or (docker compose version 2>$null)) {
-    Write-Host "✓ Docker Compose already installed" -ForegroundColor Green
+if (Test-CommandExists docker) {
+    try {
+        $composeVersion = docker compose version 2>&1
+        if ($LASTEXITCODE -eq 0) {
+            Write-Host "✓ Docker Compose available: $($composeVersion -split "`n" | Select-Object -First 1)" -ForegroundColor Green
+        }
+    } catch {
+        Write-Host "ℹ Docker Compose will be available once Docker Desktop is running" -ForegroundColor Gray
+    }
 } else {
     Write-Host "ℹ Docker Compose is included with Docker Desktop for Windows" -ForegroundColor Gray
 }
