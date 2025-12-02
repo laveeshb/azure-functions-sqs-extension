@@ -13,7 +13,7 @@ on:
         type: boolean
         default: true
       publish-isolated:
-        description: 'Publish Isolated Worker package (Azure.Functions.Worker.Extensions.SQS)'
+        description: 'Publish Isolated Worker package (Extensions.Azure.Functions.Worker.SQS)'
         required: true
         type: boolean
         default: true
@@ -148,10 +148,10 @@ jobs:
         echo "Version: **${{ inputs.version }}**" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         if [ "${{ inputs.publish-inprocess }}" == "true" ]; then
-          echo "- ✅ Azure.WebJobs.Extensions.SQS published to NuGet" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Extensions.Azure.WebJobs.SQS published to NuGet" >> $GITHUB_STEP_SUMMARY
         fi
         if [ "${{ inputs.publish-isolated }}" == "true" ]; then
-          echo "- ✅ Azure.Functions.Worker.Extensions.SQS published to NuGet" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Extensions.Azure.Functions.Worker.SQS published to NuGet" >> $GITHUB_STEP_SUMMARY
         fi
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "### Next Steps" >> $GITHUB_STEP_SUMMARY
