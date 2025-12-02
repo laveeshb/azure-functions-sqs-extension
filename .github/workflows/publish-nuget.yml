@@ -99,12 +99,12 @@ jobs:
         done
     
     - name: Create GitHub Release
-      uses: actions/create-release@v1
+      uses: softprops/action-gh-release@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         tag_name: v${{ inputs.version }}
-        release_name: Release v${{ inputs.version }}
+        name: Release v${{ inputs.version }}
         body: |
           ## NuGet Packages Published
           
@@ -129,6 +129,7 @@ jobs:
           - [NuGet - Isolated Worker](https://www.nuget.org/packages/Azure.Functions.Worker.Extensions.SQS/${{ inputs.version }})
         draft: false
         prerelease: ${{ contains(inputs.version, '-') }}
+        files: ./packages/*.nupkg
     
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
