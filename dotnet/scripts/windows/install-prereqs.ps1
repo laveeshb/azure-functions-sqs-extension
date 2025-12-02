@@ -189,11 +189,24 @@ if (Test-CommandExists aws) {
     Write-Host "  ✓ AWS CLI: $awsVer" -ForegroundColor Green 
 }
 if (Test-CommandExists docker) { 
-    $dockerVer = docker --version
-    Write-Host "  ✓ Docker: $dockerVer" -ForegroundColor Green 
+    try {
+        $dockerVer = docker --version 2>$null
+        if ($LASTEXITCODE -eq 0) {
+            Write-Host "  ✓ Docker: $dockerVer" -ForegroundColor Green 
+        }
+    } catch {
+        # Docker installed but not available yet
+    }
 }
-if ((Test-CommandExists docker-compose) -or (docker compose version 2>$null)) { 
-    Write-Host "  ✓ Docker Compose: installed" -ForegroundColor Green 
+if (Test-CommandExists docker) {
+    try {
+        $composeCheck = docker compose version 2>$null
+        if ($LASTEXITCODE -eq 0) {
+            Write-Host "  ✓ Docker Compose: installed" -ForegroundColor Green 
+        }
+    } catch {
+        # Docker Compose not available yet
+    }
 }
 if (Test-CommandExists azurite) { 
     $azuriteVer = azurite --version
