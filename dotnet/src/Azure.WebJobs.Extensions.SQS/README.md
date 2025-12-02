@@ -4,12 +4,12 @@ Amazon SQS extension for Azure Functions using the **In-Process (WebJobs) hostin
 
 > 📦 **Note:** This package is a modernized continuation of the legacy [AzureFunctions.Extension.SQS](https://www.nuget.org/packages/AzureFunctions.Extension.SQS) package, updated for Azure Functions v4, .NET 6/8, and modern AWS SDK patterns.
 
-> ℹ️ **Recommendation:** For new projects, consider using [Azure.Functions.Worker.Extensions.SQS](https://www.nuget.org/packages/Azure.Functions.Worker.Extensions.SQS) which supports the **isolated worker model** (Microsoft's recommended approach). The in-process model will be [retired on November 10, 2026](https://aka.ms/azure-functions-retirements/in-process-model).
+> ℹ️ **Recommendation:** For new projects, consider using [Extensions.Azure.Functions.Worker.SQS](https://www.nuget.org/packages/Extensions.Azure.Functions.Worker.SQS) which supports the **isolated worker model** (Microsoft's recommended approach). The in-process model will be [retired on November 10, 2026](https://aka.ms/azure-functions-retirements/in-process-model).
 
 ## Installation
 
 ```bash
-dotnet add package Azure.Extensions.WebJobs.SQS
+dotnet add package Extensions.Azure.WebJobs.SQS
 ```
 
 ## Features

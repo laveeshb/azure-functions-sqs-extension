@@ -8,7 +8,7 @@ on:
         required: true
         type: string
       publish-inprocess:
-        description: 'Publish In-Process package (Azure.Extensions.WebJobs.SQS)'
+        description: 'Publish In-Process package (Extensions.Azure.WebJobs.SQS)'
         required: true
         type: boolean
         default: true
