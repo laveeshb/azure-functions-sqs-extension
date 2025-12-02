@@ -118,6 +118,12 @@ jobs:
           sleep 2
         done
     
+    - name: Configure AWS credentials for LocalStack
+      run: |
+        aws configure set aws_access_key_id test
+        aws configure set aws_secret_access_key test
+        aws configure set region us-east-1
+    
     - name: Create SQS Test Queues
       run: |
         echo "Creating test queues..."
