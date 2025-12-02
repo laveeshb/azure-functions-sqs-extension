@@ -290,7 +290,7 @@ Configure polling behavior in `host.json`:
 - [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)
 - [Azure Functions Core Tools v4](https://docs.microsoft.com/azure/azure-functions/functions-run-local)
 - [AWS CLI](https://aws.amazon.com/cli/)
-- AWS SQS queue or [LocalStack](https://localstack.cloud/) for local testing
+- Amazon SQS queue or [LocalStack](https://localstack.cloud/) for local testing
 
 ### Local Settings
 

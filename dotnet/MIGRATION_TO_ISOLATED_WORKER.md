@@ -122,7 +122,7 @@ var host = new HostBuilder()
         services.AddApplicationInsightsTelemetryWorkerService();
         services.ConfigureFunctionsApplicationInsights();
         
-        // Register AWS SQS client
+        // Register Amazon SQS client
         services.AddSingleton<IAmazonSQS>(sp => new AmazonSQSClient());
     })
     .Build();

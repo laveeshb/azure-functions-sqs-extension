@@ -157,6 +157,6 @@ Extensions.SQS.Sample/
 
 ## Learn More
 
-- [AWS SQS Documentation](https://docs.aws.amazon.com/sqs/)
+- [Amazon SQS Documentation](https://docs.aws.amazon.com/sqs/)
 - [Azure Functions Documentation](https://docs.microsoft.com/azure/azure-functions/)
 - [Extension Source Code](../../src/Extensions.SQS/)
