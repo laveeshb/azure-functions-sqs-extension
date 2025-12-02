@@ -7,10 +7,11 @@ Azure Functions bindings for Amazon Simple Queue Service (SQS) supporting both i
 ```
 dotnet/
 ├── src/              # Source code for both SDK packages
-├── test/             # Test projects and sample applications
+├── samples/          # Sample applications (v2 and v3)
 ├── scripts/          # Build, test, and setup scripts
-├── localstack/       # LocalStack testing infrastructure
-└── docs/             # Documentation and migration guides
+├── localstack/       # LocalStack testing infrastructure & documentation
+├── README.md         # Main documentation
+└── MIGRATION_GUIDE.md # Migration guide from legacy packages
 ```
 
 ## Packages
@@ -386,7 +387,7 @@ func start
 
 ## Migration Guide
 
-Migrating from the older `AzureFunctions.Extension.SQS` package? See the [Migration Guide](./docs/MIGRATION_TO_ISOLATED_WORKER.md) for detailed instructions.
+Migrating from the older `AzureFunctions.Extension.SQS` package? See the [Migration Guide](./MIGRATION_GUIDE.md) for detailed instructions.
 
 ## Building from Source
 
