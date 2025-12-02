@@ -35,7 +35,7 @@ For .NET developers, this extension provides two packages supporting both hostin
 - 🐳 LocalStack support for local development
 
 📖 **[See full .NET documentation](./dotnet/README.md)**
-🧪 **[LocalStack testing guide](./dotnet/docs/LOCALSTACK_TESTING.md)**
+🧪 **[LocalStack testing guide](./dotnet/localstack/README.md)**
 
 ## 📜 History & Attribution
 

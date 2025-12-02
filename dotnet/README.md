@@ -312,12 +312,12 @@ Configure polling behavior in `host.json`:
 
 ### Testing with LocalStack
 
-For local development without connecting to AWS, we provide LocalStack integration. See the [LocalStack Testing Guide](./LOCALSTACK_TESTING.md) for complete setup instructions.
+For local development without connecting to AWS, we provide LocalStack integration. See the [LocalStack Testing Guide](./localstack/README.md) for complete setup instructions.
 
 **Quick start:**
 ```bash
 # Start LocalStack with test queues
-./setup-localstack.sh
+./localstack/setup-localstack.sh
 
 # Send test messages
 ./send-test-message.sh
@@ -367,7 +367,7 @@ No AWS credentials needed! LocalStack provides a local AWS environment:
 ./localstack/setup-localstack.sh
 
 # 2. Update local.settings.json with LocalStack endpoint
-# See docs/LOCALSTACK_TESTING.md for configuration details
+# See localstack/README.md for configuration details
 
 # 3. Start your function app
 cd samples/Extensions.SQS.Sample.v3
@@ -377,7 +377,7 @@ func start
 ./localstack/send-test-message.sh
 ```
 
-📖 **Complete guide:** See [LocalStack Testing Guide](./docs/LOCALSTACK_TESTING.md) for detailed setup and usage.
+📖 **Complete guide:** See [LocalStack Testing Guide](./localstack/README.md) for detailed setup and usage.
 
 # Isolated worker model
 cd test/Extensions.SQS.Test.Isolated
