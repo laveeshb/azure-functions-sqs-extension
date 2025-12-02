@@ -6,17 +6,17 @@ This guide helps you migrate between different versions of the Azure Functions S
 
 The Azure Functions SQS Extension now provides **two separate packages** to support both hosting models:
 
-| Package | Model | Status | End of Support |
-|---------|-------|--------|----------------|
-| **Azure.WebJobs.Extensions.SQS** | In-process | ✅ Supported | [Nov 10, 2026](https://aka.ms/azure-functions-retirements/in-process-model) |
-| **Azure.Functions.Worker.Extensions.SQS** | Isolated worker | ✅ Supported (Recommended) | N/A |
+| Package | Model | Status | Azure Functions Platform Support |
+|---------|-------|--------|----------------------------------|
+| **Azure.WebJobs.Extensions.SQS** | In-process | ✅ Available | [Until Nov 10, 2026](https://aka.ms/azure-functions-retirements/in-process-model) |
+| **Azure.Functions.Worker.Extensions.SQS** | Isolated worker | ✅ Available (Recommended) | Ongoing |
 
-> ⚠️ **Important**: The in-process model will reach end of support on **November 10, 2026**. After this date, Azure Functions will no longer support the in-process hosting model. [Learn more about the retirement timeline](https://aka.ms/azure-functions-retirements/in-process-model).
+> ⚠️ **Important**: Microsoft Azure Functions will end support for the in-process hosting model on **November 10, 2026**. After this date, in-process functions will no longer be supported by the Azure Functions runtime. [Learn more about Microsoft's retirement timeline](https://aka.ms/azure-functions-retirements/in-process-model).
 
 ### Which Package Should I Use?
 
 - **New projects**: Use `Azure.Functions.Worker.Extensions.SQS` (isolated worker model)
-- **Existing in-process apps**: Can continue using `Azure.WebJobs.Extensions.SQS` until **November 10, 2026** when Azure Functions in-process support ends
+- **Existing in-process apps**: Can continue using `Azure.WebJobs.Extensions.SQS` until **November 10, 2026** when Microsoft ends Azure Functions platform support for in-process model
 - **Legacy apps**: Migrate from old `AzureFunctions.Extension.SQS` package
 
 ## Migration Scenarios
@@ -317,7 +317,7 @@ Check your function logs and output queue for sent messages.
 
 - **2024-2025**: Migrate to isolated worker model for new projects
 - **By Q4 2025**: Plan migration for existing in-process apps
-- **By November 10, 2026**: Complete migration before Azure Functions in-process model support ends ([official timeline](https://aka.ms/azure-functions-retirements/in-process-model))
+- **By November 10, 2026**: Complete migration before Microsoft ends Azure Functions platform support for in-process model ([official timeline](https://aka.ms/azure-functions-retirements/in-process-model))
 
 ## Resources
 
