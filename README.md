@@ -4,7 +4,7 @@
 [![NuGet - In-Process](https://img.shields.io/nuget/v/Azure.WebJobs.Extensions.SQS.svg?label=Azure.WebJobs.Extensions.SQS)](https://www.nuget.org/packages/Azure.WebJobs.Extensions.SQS)
 [![NuGet - Isolated Worker](https://img.shields.io/nuget/v/Azure.Functions.Worker.Extensions.SQS.svg?label=Azure.Functions.Worker.Extensions.SQS)](https://www.nuget.org/packages/Azure.Functions.Worker.Extensions.SQS)
 
-Multi-language Azure Functions bindings for Amazon Simple Queue Service (SQS). 🔗
+Multi-language [Azure Functions](https://learn.microsoft.com/azure/azure-functions/) bindings for Amazon Simple Queue Service (SQS). 🔗
 
 ## 📋 Overview
 
