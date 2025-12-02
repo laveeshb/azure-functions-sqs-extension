@@ -1,7 +1,5 @@
 # Azure Functions SQS Extension for .NET
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-
 Azure Functions bindings for Amazon Simple Queue Service (SQS) supporting both in-process and isolated worker hosting models.
 
 ## Packages
