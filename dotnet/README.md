@@ -348,7 +348,7 @@ dotnet build -c Release
 
 ## What's New
 
-### v1.0.0 (December 2024)
+### v1.0.0 (December 2025)
 
 - ✨ **Dual Package Architecture**: Separate packages for in-process and isolated worker models
 - ✨ **.NET 6 & .NET 8** multi-targeting support
