@@ -101,7 +101,7 @@ public class SqsQueueTriggerListener : IListener
                 VisibilityTimeout = (int)_sqsQueueOptions.Value.VisibilityTimeout!.Value.TotalSeconds,
                 WaitTimeSeconds = 20, // Enable long polling
                 MessageAttributeNames = ["All"],
-                AttributeNames = ["All"]
+                MessageSystemAttributeNames = ["All"]
             };
 
             var result = await _amazonSqsClient.ReceiveMessageAsync(receiveMessageRequest, cancellationToken);

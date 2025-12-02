@@ -9,10 +9,10 @@ public class SqsQueueMessage
     /// <summary>
     /// The message body content
     /// </summary>
-    public required string Body { get; set; }
+    public string Body { get; set; } = string.Empty;
 
     /// <summary>
     /// The target queue URL
     /// </summary>
-    public required string QueueUrl { get; set; }
+    public string QueueUrl { get; set; } = string.Empty;
 }
