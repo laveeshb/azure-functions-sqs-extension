@@ -6,7 +6,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <PackageId>Azure.Extensions.Functions.SQS</PackageId>
+    <PackageId>Extensions.Azure.Functions.Worker.SQS</PackageId>
     <Authors>Laveesh Bansal</Authors>
     <Company />
     <Product>Azure Functions Worker SQS Extension</Product>
