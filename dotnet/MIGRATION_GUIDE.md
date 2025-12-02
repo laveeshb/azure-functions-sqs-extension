@@ -15,15 +15,15 @@ The Azure Functions SQS Extension now provides **two separate packages** to supp
 
 ### Which Package Should I Use?
 
-- **New projects**: Use `Azure.Functions.Worker.Extensions.SQS` (isolated worker model)
-- **Existing in-process apps**: Can continue using `Azure.WebJobs.Extensions.SQS` until **November 10, 2026** when Microsoft ends Azure Functions platform support for in-process model
+- **New projects**: Use `Extensions.Azure.Functions.Worker.SQS` (isolated worker model)
+- **Existing in-process apps**: Can continue using `Extensions.Azure.WebJobs.SQS` until **November 10, 2026** when Microsoft ends Azure Functions platform support for in-process model
 - **Legacy apps**: Migrate from old `AzureFunctions.Extension.SQS` package
 
 ## Migration Scenarios
 
 ### Scenario 1: Legacy Package → In-Process Model
 
-Migrating from `AzureFunctions.Extension.SQS` (v2.x/v3.x) to `Azure.WebJobs.Extensions.SQS` (v1.x).
+Migrating from `AzureFunctions.Extension.SQS` (v2.x/v3.x) to `Extensions.Azure.WebJobs.SQS` (v1.x).
 
 #### 1. Update Package Reference
 
@@ -32,7 +32,7 @@ Migrating from `AzureFunctions.Extension.SQS` (v2.x/v3.x) to `Azure.WebJobs.Exte
 <PackageReference Include="AzureFunctions.Extension.SQS" Version="3.0.0" />
 
 <!-- Add new package -->
-<PackageReference Include="Azure.WebJobs.Extensions.SQS" Version="1.0.0" />
+<PackageReference Include="Extensions.Azure.WebJobs.SQS" Version="1.0.0" />
 ```
 
 #### 2. Update Namespace
@@ -88,7 +88,7 @@ public void Run(
 
 ### Scenario 2: Legacy Package → Isolated Worker Model (Recommended)
 
-Migrating from `AzureFunctions.Extension.SQS` to `Azure.Functions.Worker.Extensions.SQS`.
+Migrating from `AzureFunctions.Extension.SQS` to `Extensions.Azure.Functions.Worker.SQS`.
 
 #### 1. Update Project File
 
@@ -103,7 +103,7 @@ Migrating from `AzureFunctions.Extension.SQS` to `Azure.Functions.Worker.Extensi
 <PackageReference Include="Microsoft.NET.Sdk.Functions" Version="4.x.x" />
 
 <!-- Add isolated worker packages -->
-<PackageReference Include="Azure.Functions.Worker.Extensions.SQS" Version="1.0.0" />
+<PackageReference Include="Extensions.Azure.Functions.Worker.SQS" Version="1.0.0" />
 <PackageReference Include="Microsoft.Azure.Functions.Worker" Version="1.23.0" />
 <PackageReference Include="Microsoft.Azure.Functions.Worker.Sdk" Version="1.18.1" />
 ```
@@ -241,7 +241,7 @@ public class SqsFunctions
 
 ### Scenario 3: In-Process → Isolated Worker
 
-Migrating from `Azure.WebJobs.Extensions.SQS` to `Azure.Functions.Worker.Extensions.SQS`.
+Migrating from `Extensions.Azure.WebJobs.SQS` to `Extensions.Azure.Functions.Worker.SQS`.
 
 Follow the same steps as **Scenario 2**, but:
 - Start with simpler namespace changes
@@ -252,7 +252,7 @@ Follow the same steps as **Scenario 2**, but:
 
 | Feature | In-Process | Isolated Worker |
 |---------|------------|-----------------|
-| **Package** | Azure.WebJobs.Extensions.SQS | Azure.Functions.Worker.Extensions.SQS |
+| **Package** | Extensions.Azure.WebJobs.SQS | Extensions.Azure.Functions.Worker.SQS |
 | **Trigger Attribute** | `[SqsQueueTrigger]` | `[SqsTrigger]` |
 | **Output Attribute** | `[SqsQueueOut]` with `out` parameter | Use `IAmazonSQS` directly |
 | **Function Attribute** | `[FunctionName]` | `[Function]` |

@@ -70,8 +70,8 @@ jobs:
       run: |
         echo "## Build Summary" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
-        echo "✅ **In-Process SDK**: Azure.WebJobs.Extensions.SQS built successfully" >> $GITHUB_STEP_SUMMARY
-        echo "✅ **Isolated Worker SDK**: Azure.Functions.Worker.Extensions.SQS built successfully" >> $GITHUB_STEP_SUMMARY
+        echo "✅ **In-Process SDK**: Extensions.Azure.WebJobs.SQS built successfully" >> $GITHUB_STEP_SUMMARY
+        echo "✅ **Isolated Worker SDK**: Extensions.Azure.Functions.Worker.SQS built successfully" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "### NuGet Packages" >> $GITHUB_STEP_SUMMARY
         ls -lh ./packages/*.nupkg | awk '{print "- " $9 " (" $5 ")"}' >> $GITHUB_STEP_SUMMARY

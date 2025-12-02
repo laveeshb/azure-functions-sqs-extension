@@ -6,7 +6,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <PackageId>Azure.WebJobs.Extensions.SQS</PackageId>
+    <PackageId>Extensions.Azure.WebJobs.SQS</PackageId>
     <Authors>Laveesh Bansal</Authors>
     <Company />
     <Product>Azure WebJobs SQS Extension</Product>

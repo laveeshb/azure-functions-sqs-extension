@@ -20,21 +20,21 @@ This extension provides two separate packages following Microsoft's pattern for 
 
 | Package | Hosting Model | NuGet | Documentation |
 |---------|---------------|-------|---------------|
-| **Azure.WebJobs.Extensions.SQS** | In-process | Coming soon | [README](./src/Azure.WebJobs.Extensions.SQS/README.md) |
-| **Azure.Functions.Worker.Extensions.SQS** | Isolated worker | Coming soon | [README](./src/Azure.Functions.Worker.Extensions.SQS/README.md) |
+| **Extensions.Azure.WebJobs.SQS** | In-process | Coming soon | [README](./src/Azure.WebJobs.Extensions.SQS/README.md) |
+| **Extensions.Azure.Functions.Worker.SQS** | Isolated worker | Coming soon | [README](./src/Azure.Functions.Worker.Extensions.SQS/README.md) |
 
 ## Installation
 
 ### In-Process Model
 
 ```bash
-dotnet add package Azure.WebJobs.Extensions.SQS
+dotnet add package Extensions.Azure.WebJobs.SQS
 ```
 
 ### Isolated Worker Model (Recommended)
 
 ```bash
-dotnet add package Azure.Functions.Worker.Extensions.SQS
+dotnet add package Extensions.Azure.Functions.Worker.SQS
 ```
 
 ## Requirements

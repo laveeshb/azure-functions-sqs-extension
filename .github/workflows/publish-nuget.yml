@@ -8,12 +8,12 @@ on:
         required: true
         type: string
       publish-inprocess:
-        description: 'Publish In-Process package (Azure.WebJobs.Extensions.SQS)'
+        description: 'Publish In-Process package (Extensions.Azure.WebJobs.SQS)'
         required: true
         type: boolean
         default: true
       publish-isolated:
-        description: 'Publish Isolated Worker package (Azure.Functions.Worker.Extensions.SQS)'
+        description: 'Publish Isolated Worker package (Extensions.Azure.Functions.Worker.SQS)'
         required: true
         type: boolean
         default: true
@@ -21,6 +21,8 @@ on:
 jobs:
   publish:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     
     steps:
     - name: Checkout code
@@ -98,6 +100,39 @@ jobs:
             --skip-duplicate
         done
     
+    - name: Build release notes
+      id: release-notes
+      run: |
+        cat << 'EOF' > release-notes.md
+        ## NuGet Packages Published
+        
+        EOF
+        if [ "${{ inputs.publish-inprocess }}" == "true" ]; then
+          echo "✅ Extensions.Azure.WebJobs.SQS v${{ inputs.version }}" >> release-notes.md
+        fi
+        if [ "${{ inputs.publish-isolated }}" == "true" ]; then
+          echo "✅ Extensions.Azure.Functions.Worker.SQS v${{ inputs.version }}" >> release-notes.md
+        fi
+        cat << 'EOF' >> release-notes.md
+        
+        ### Installation
+        
+        ```bash
+        # In-Process Model
+        dotnet add package Extensions.Azure.WebJobs.SQS --version ${{ inputs.version }}
+        
+        # Isolated Worker Model (Recommended)
+        dotnet add package Extensions.Azure.Functions.Worker.SQS --version ${{ inputs.version }}
+        ```
+        
+        ### Links
+        
+        - [Documentation](https://github.com/laveeshb/azure-functions-sqs-extension/blob/main/dotnet/README.md)
+        - [Migration Guide](https://github.com/laveeshb/azure-functions-sqs-extension/blob/main/dotnet/MIGRATION_GUIDE.md)
+        - [NuGet - In-Process](https://www.nuget.org/packages/Extensions.Azure.WebJobs.SQS/${{ inputs.version }})
+        - [NuGet - Isolated Worker](https://www.nuget.org/packages/Extensions.Azure.Functions.Worker.SQS/${{ inputs.version }})
+        EOF
+    
     - name: Create GitHub Release
       uses: softprops/action-gh-release@v1
       env:
@@ -105,28 +140,7 @@ jobs:
       with:
         tag_name: v${{ inputs.version }}
         name: Release v${{ inputs.version }}
-        body: |
-          ## NuGet Packages Published
-          
-          ${{ inputs.publish-inprocess && '✅ Azure.WebJobs.Extensions.SQS v${{ inputs.version }}' || '' }}
-          ${{ inputs.publish-isolated && '✅ Azure.Functions.Worker.Extensions.SQS v${{ inputs.version }}' || '' }}
-          
-          ### Installation
-          
-          ```bash
-          # In-Process Model
-          dotnet add package Azure.WebJobs.Extensions.SQS --version ${{ inputs.version }}
-          
-          # Isolated Worker Model (Recommended)
-          dotnet add package Azure.Functions.Worker.Extensions.SQS --version ${{ inputs.version }}
-          ```
-          
-          ### Links
-          
-          - [Documentation](https://github.com/laveeshb/azure-functions-sqs-extension/blob/main/dotnet/README.md)
-          - [Migration Guide](https://github.com/laveeshb/azure-functions-sqs-extension/blob/main/dotnet/MIGRATION_GUIDE.md)
-          - [NuGet - In-Process](https://www.nuget.org/packages/Azure.WebJobs.Extensions.SQS/${{ inputs.version }})
-          - [NuGet - Isolated Worker](https://www.nuget.org/packages/Azure.Functions.Worker.Extensions.SQS/${{ inputs.version }})
+        body_path: release-notes.md
         draft: false
         prerelease: ${{ contains(inputs.version, '-') }}
         files: ./packages/*.nupkg
@@ -145,10 +159,10 @@ jobs:
         echo "Version: **${{ inputs.version }}**" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         if [ "${{ inputs.publish-inprocess }}" == "true" ]; then
-          echo "- ✅ Azure.WebJobs.Extensions.SQS published to NuGet" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Extensions.Azure.WebJobs.SQS published to NuGet" >> $GITHUB_STEP_SUMMARY
         fi
         if [ "${{ inputs.publish-isolated }}" == "true" ]; then
-          echo "- ✅ Azure.Functions.Worker.Extensions.SQS published to NuGet" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Extensions.Azure.Functions.Worker.SQS published to NuGet" >> $GITHUB_STEP_SUMMARY
         fi
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "### Next Steps" >> $GITHUB_STEP_SUMMARY
