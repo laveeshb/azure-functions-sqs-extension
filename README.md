@@ -32,8 +32,10 @@ For .NET developers, this extension provides two packages supporting both hostin
 - 🎯 Multi-targeting: .NET 6.0 and .NET 8.0
 - 🔐 AWS credential chain support
 - 🔄 Long polling and configurable batch processing
+- 🐳 LocalStack support for local development
 
 📖 **[See full .NET documentation](./dotnet/README.md)**
+🧪 **[LocalStack testing guide](./dotnet/LOCALSTACK_TESTING.md)**
 
 ## 📜 History & Attribution
 

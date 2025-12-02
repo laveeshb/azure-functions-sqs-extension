@@ -29,7 +29,16 @@ dotnet add package Azure.Functions.Worker.Extensions.SQS
 
 - **.NET 6.0 or .NET 8.0** (recommended)
 - **Azure Functions v4** runtime
-- **AWS SQS** queue
+- **AWS SQS** queue (or LocalStack for local testing)
+
+### Development Prerequisites
+
+- [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)
+- [Azure Functions Core Tools v4](https://docs.microsoft.com/azure/azure-functions/functions-run-local)
+- [AWS CLI](https://aws.amazon.com/cli/) (for AWS or LocalStack)
+- [Docker & Docker Compose](https://www.docker.com/) (for LocalStack testing)
+
+**Quick install:** Run `./install-prereqs.sh` to install all prerequisites automatically.
 
 ## Features
 
@@ -324,10 +333,40 @@ Create a `local.settings.json` file:
 
 ### Running Locally
 
+#### With AWS SQS
+
+Configure your `local.settings.json` with AWS credentials (see above), then:
+
 ```bash
 # In-process model
 cd test/Extensions.SQS.Test.InProcess
 func start
+
+# Isolated worker model
+cd test/Extensions.SQS.Test.Isolated
+func start
+```
+
+#### With LocalStack (Recommended for Local Development)
+
+No AWS credentials needed! LocalStack provides a local AWS environment:
+
+```bash
+# 1. Start LocalStack with test queues
+./setup-localstack.sh
+
+# 2. Update local.settings.json with LocalStack endpoint
+# See LOCALSTACK_TESTING.md for configuration details
+
+# 3. Start your function app
+cd samples/Extensions.SQS.Sample.v3
+func start
+
+# 4. Send test messages
+./send-test-message.sh
+```
+
+📖 **Complete guide:** See [LocalStack Testing Guide](./LOCALSTACK_TESTING.md) for detailed setup and usage.
 
 # Isolated worker model
 cd test/Extensions.SQS.Test.Isolated

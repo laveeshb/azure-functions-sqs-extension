@@ -77,6 +77,51 @@ else
     fi
 fi
 
+# Install Docker (for LocalStack testing)
+if command_exists docker; then
+    DOCKER_VERSION=$(docker --version)
+    echo "✓ Docker already installed: $DOCKER_VERSION"
+else
+    echo "Docker not found. Install? (y/n)"
+    read -r INSTALL_DOCKER
+    if [[ "$INSTALL_DOCKER" == "y" ]]; then
+        echo "Installing Docker..."
+        if [[ "$OSTYPE" == "linux-gnu"* ]]; then
+            # Install Docker on Linux
+            curl -fsSL https://get.docker.com -o /tmp/get-docker.sh
+            sudo sh /tmp/get-docker.sh
+            sudo usermod -aG docker $USER
+            rm /tmp/get-docker.sh
+            echo "✓ Docker installed (logout/login required for group changes)"
+        elif [[ "$OSTYPE" == "darwin"* ]]; then
+            echo "Please install Docker Desktop from https://www.docker.com/products/docker-desktop"
+            echo "⊘ Manual installation required on macOS"
+        fi
+    else
+        echo "⊘ Skipping Docker installation"
+    fi
+fi
+
+# Install Docker Compose (for LocalStack)
+if command_exists docker-compose || docker compose version >/dev/null 2>&1; then
+    echo "✓ Docker Compose already installed"
+else
+    echo "Docker Compose not found. Install? (y/n)"
+    read -r INSTALL_COMPOSE
+    if [[ "$INSTALL_COMPOSE" == "y" ]]; then
+        echo "Installing Docker Compose..."
+        if [[ "$OSTYPE" == "linux-gnu"* ]]; then
+            sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+            sudo chmod +x /usr/local/bin/docker-compose
+            echo "✓ Docker Compose installed"
+        elif [[ "$OSTYPE" == "darwin"* ]]; then
+            echo "Docker Compose is included with Docker Desktop"
+        fi
+    else
+        echo "⊘ Skipping Docker Compose installation"
+    fi
+fi
+
 # Install Azurite (optional, for local Azure Storage emulation)
 if command_exists azurite; then
     echo "✓ Azurite already installed"
@@ -103,9 +148,12 @@ echo "Installed components:"
 dotnet --version 2>/dev/null && echo "  ✓ .NET SDK: $(dotnet --version)"
 func --version 2>/dev/null && echo "  ✓ Azure Functions Core Tools: $(func --version)"
 aws --version 2>/dev/null && echo "  ✓ AWS CLI: $(aws --version)"
+docker --version 2>/dev/null && echo "  ✓ Docker: $(docker --version)"
+(docker-compose --version 2>/dev/null || docker compose version 2>/dev/null) && echo "  ✓ Docker Compose: installed"
 azurite --version 2>/dev/null && echo "  ✓ Azurite: $(azurite --version)"
 echo ""
 echo "Next steps:"
-echo "  1. Configure AWS credentials: aws configure"
-echo "  2. Build extensions: ./build.sh"
-echo "  3. Run tests: ./test.sh"
+echo "  1. For AWS: Configure credentials with 'aws configure'"
+echo "  2. For LocalStack: Run './setup-localstack.sh' (see LOCALSTACK_TESTING.md)"
+echo "  3. Build extensions: ./build.sh"
+echo "  4. Run tests: ./test.sh"
