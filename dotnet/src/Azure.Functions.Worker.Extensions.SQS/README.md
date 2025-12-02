@@ -123,8 +123,37 @@ public class SqsOutputFunctions
 
 ### AWS Credentials
 
-The extension uses the AWS credential chain in this order:
-1. Environment variables (`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_REGION`)
+The extension uses the AWS credential chain to automatically discover credentials.
+
+**For local development** - Use `local.settings.json`:
+```json
+{
+  "Values": {
+    "AWS_ACCESS_KEY_ID": "your-access-key",
+    "AWS_SECRET_ACCESS_KEY": "your-secret-key",
+    "AWS_REGION": "us-east-1"
+  }
+}
+```
+
+**For Azure Functions (production)** - Configure Application Settings:
+- Via Azure Portal: Settings → Configuration → Application settings
+- Via Azure CLI:
+  ```bash
+  az functionapp config appsettings set \
+    --name <function-app-name> \
+    --resource-group <resource-group> \
+    --settings AWS_ACCESS_KEY_ID=<key> AWS_SECRET_ACCESS_KEY=<secret>
+  ```
+
+**Best Practice** - Use Azure Key Vault for production:
+```
+AWS_ACCESS_KEY_ID=@Microsoft.KeyVault(SecretUri=https://vault.azure.net/secrets/AwsAccessKeyId/)
+AWS_SECRET_ACCESS_KEY=@Microsoft.KeyVault(SecretUri=https://vault.azure.net/secrets/AwsSecretAccessKey/)
+```
+
+The credential chain order:
+1. Environment variables (recommended)
 2. IAM roles (when running in AWS or Azure with federated credentials)
 3. AWS CLI credentials file (`~/.aws/credentials`)
 

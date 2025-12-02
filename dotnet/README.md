@@ -158,22 +158,105 @@ public class SqsFunctions
 
 ## Authentication
 
-The extension supports multiple AWS credential methods (in order of precedence):
+The extension supports multiple AWS credential methods using the AWS credential chain. The extension automatically tries credentials in the following order:
 
-1. **AWS Credential Chain** (Recommended)
-   - Environment variables (`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`)
-   - AWS credentials file (`~/.aws/credentials`)
-   - IAM roles (when running on AWS infrastructure)
-   - ECS container credentials
-   - EC2 instance profile
+### 1. Environment Variables (Recommended for Azure Functions)
 
-2. **Explicit Credentials** (for backward compatibility, in-process only)
-   ```csharp
-   [SqsQueueTrigger(
-       AWSKeyId = "%AWS_KEY_ID%",
-       AWSAccessKey = "%AWS_ACCESS_KEY%",
-       QueueUrl = "%SQS_QUEUE_URL%")]
+**Best for:** Production Azure Functions, local development
+
+Set AWS credentials as environment variables. The extension automatically discovers them.
+
+**Local Development** (`local.settings.json`):
+```json
+{
+  "Values": {
+    "AWS_ACCESS_KEY_ID": "your-access-key",
+    "AWS_SECRET_ACCESS_KEY": "your-secret-key",
+    "AWS_REGION": "us-east-1"
+  }
+}
+```
+
+**Azure Functions (Production)**:
+
+Configure in **Application Settings** via Azure Portal:
+1. Go to Function App → **Settings** → **Configuration**
+2. Add application settings:
+   - `AWS_ACCESS_KEY_ID` = your access key
+   - `AWS_SECRET_ACCESS_KEY` = your secret key
+   - `AWS_REGION` = your region
+
+Or use Azure CLI:
+```bash
+az functionapp config appsettings set \
+  --name <function-app-name> \
+  --resource-group <resource-group> \
+  --settings \
+    AWS_ACCESS_KEY_ID=<key> \
+    AWS_SECRET_ACCESS_KEY=<secret> \
+    AWS_REGION=us-east-1
+```
+
+**Best Practice - Azure Key Vault** (Recommended for Production):
+
+Store secrets in Azure Key Vault and reference them:
+
+1. Create secrets in Azure Key Vault
+2. Enable **System-assigned Managed Identity** on your Function App
+3. Grant the identity "Get" permission on Key Vault secrets
+4. Reference secrets in Application Settings:
    ```
+   AWS_ACCESS_KEY_ID=@Microsoft.KeyVault(SecretUri=https://your-vault.vault.azure.net/secrets/AwsAccessKeyId/)
+   AWS_SECRET_ACCESS_KEY=@Microsoft.KeyVault(SecretUri=https://your-vault.vault.azure.net/secrets/AwsSecretAccessKey/)
+   ```
+
+### 2. AWS Credentials File
+
+**Best for:** Local development only
+
+Create `~/.aws/credentials`:
+```ini
+[default]
+aws_access_key_id = your-access-key
+aws_secret_access_key = your-secret-key
+region = us-east-1
+```
+
+### 3. IAM Roles
+
+**Best for:** Running on AWS infrastructure (EC2, ECS, Lambda)
+
+If your Azure Function runs on AWS infrastructure (hybrid scenarios), the extension automatically uses:
+- ECS container credentials
+- EC2 instance profile credentials
+
+### 4. Explicit Credentials (Legacy)
+
+**Best for:** Backward compatibility only (in-process model only)
+
+⚠️ **Not recommended** - Use environment variables instead.
+
+```csharp
+[SqsQueueTrigger(
+    AWSKeyId = "%AWS_KEY_ID%",
+    AWSAccessKey = "%AWS_ACCESS_KEY%",
+    QueueUrl = "%SQS_QUEUE_URL%")]
+```
+
+### Security Best Practices
+
+✅ **DO:**
+- Use Azure Key Vault for production secrets
+- Use environment variables over hardcoded credentials
+- Rotate credentials regularly
+- Use IAM roles when possible
+- Apply least-privilege IAM policies
+
+❌ **DON'T:**
+- Hardcode credentials in code
+- Commit credentials to source control
+- Use root AWS account credentials
+- Share credentials across environments
 
 ## Configuration
 
