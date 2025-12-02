@@ -27,11 +27,11 @@ For .NET developers, this extension provides two packages supporting both hostin
 - **[Azure.Functions.Worker.Extensions.SQS](./dotnet/src/Azure.Functions.Worker.Extensions.SQS/README.md)** - Isolated worker (out-of-process) model
 
 **Features:**
-- Trigger Azure Functions from SQS queue messages
-- Send messages to SQS queues from Azure Functions
-- Multi-targeting: .NET 6.0 and .NET 8.0
-- AWS credential chain support
-- Long polling and configurable batch processing
+- ⚡ Trigger Azure Functions from SQS queue messages
+- 📤 Send messages to SQS queues from Azure Functions
+- 🎯 Multi-targeting: .NET 6.0 and .NET 8.0
+- 🔐 AWS credential chain support
+- 🔄 Long polling and configurable batch processing
 
 📖 **[See full .NET documentation](./dotnet/README.md)**
 
