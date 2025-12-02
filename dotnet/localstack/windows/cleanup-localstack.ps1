@@ -8,10 +8,11 @@ $ErrorActionPreference = "Stop"
 Write-Host "🧹 Cleaning up LocalStack resources..." -ForegroundColor Cyan
 
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+$localstackDir = Split-Path -Parent $scriptDir
 
 # Stop and remove containers
 Write-Host "🛑 Stopping and removing LocalStack containers..." -ForegroundColor Yellow
-docker-compose -f "$scriptDir/docker-compose.localstack.yml" down -v
+docker-compose -f "$localstackDir/docker-compose.localstack.yml" down -v
 
 # Remove LocalStack images (optional)
 $response = Read-Host "Do you want to remove LocalStack images as well? (y/N)"

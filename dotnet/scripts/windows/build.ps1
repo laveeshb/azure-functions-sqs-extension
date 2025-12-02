@@ -32,7 +32,8 @@ if ($Help) {
 $ErrorActionPreference = "Stop"
 
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-$dotnetDir = Split-Path -Parent $scriptDir
+$scriptsDir = Split-Path -Parent $scriptDir
+$dotnetDir = Split-Path -Parent $scriptsDir
 
 # Ensure .NET is available
 if (-not (Get-Command dotnet -ErrorAction SilentlyContinue)) {

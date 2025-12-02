@@ -18,7 +18,8 @@ try {
 # Start LocalStack
 Write-Host "📦 Starting LocalStack container..." -ForegroundColor Yellow
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-docker-compose -f "$scriptDir/docker-compose.localstack.yml" up -d
+$localstackDir = Split-Path -Parent $scriptDir
+docker-compose -f "$localstackDir/docker-compose.localstack.yml" up -d
 
 # Wait for LocalStack to be ready
 Write-Host "⏳ Waiting for LocalStack to be ready..." -ForegroundColor Yellow
