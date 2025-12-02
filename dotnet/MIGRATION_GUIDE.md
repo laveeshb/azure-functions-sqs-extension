@@ -88,7 +88,7 @@ public void Run(
 
 ### Scenario 2: Legacy Package → Isolated Worker Model (Recommended)
 
-Migrating from `AzureFunctions.Extension.SQS` to `Azure.Extensions.Functions.SQS`.
+Migrating from `AzureFunctions.Extension.SQS` to `Extensions.Azure.Functions.Worker.SQS`.
 
 #### 1. Update Project File
 
@@ -103,7 +103,7 @@ Migrating from `AzureFunctions.Extension.SQS` to `Azure.Extensions.Functions.SQS
 <PackageReference Include="Microsoft.NET.Sdk.Functions" Version="4.x.x" />
 
 <!-- Add isolated worker packages -->
-<PackageReference Include="Azure.Extensions.Functions.SQS" Version="1.0.0" />
+<PackageReference Include="Extensions.Azure.Functions.Worker.SQS" Version="1.0.0" />
 <PackageReference Include="Microsoft.Azure.Functions.Worker" Version="1.23.0" />
 <PackageReference Include="Microsoft.Azure.Functions.Worker.Sdk" Version="1.18.1" />
 ```
