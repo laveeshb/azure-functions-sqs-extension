@@ -111,7 +111,7 @@ echo "  WebJobs Extension:   $DOTNET_DIR/src/Azure.WebJobs.Extensions.SQS/bin/$C
 echo "  Worker Extension:    $DOTNET_DIR/src/Azure.Functions.Worker.Extensions.SQS/bin/$CONFIGURATION/"
 echo ""
 echo "Next steps:"
-echo "  Run tests: ./test.sh"
+echo "  Run tests: ./scripts/ci-test.sh"
 if [ "$CREATE_PACKAGE" = false ]; then
     echo "  Create packages: ./build.sh -c Release -p"
 fi

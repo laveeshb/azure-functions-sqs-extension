@@ -2,6 +2,17 @@
 
 Azure Functions bindings for Amazon Simple Queue Service (SQS) supporting both in-process and isolated worker hosting models.
 
+## 📁 Repository Structure
+
+```
+dotnet/
+├── src/              # Source code for both SDK packages
+├── test/             # Test projects and sample applications
+├── scripts/          # Build, test, and setup scripts
+├── localstack/       # LocalStack testing infrastructure
+└── docs/             # Documentation and migration guides
+```
+
 ## Packages
 
 This extension provides two separate packages following Microsoft's pattern for Azure Functions:
@@ -38,7 +49,7 @@ dotnet add package Azure.Functions.Worker.Extensions.SQS
 - [AWS CLI](https://aws.amazon.com/cli/) (for AWS or LocalStack)
 - [Docker & Docker Compose](https://www.docker.com/) (for LocalStack testing)
 
-**Quick install:** Run `./install-prereqs.sh` to install all prerequisites automatically.
+**Quick install:** Run `./scripts/install-prereqs.sh` to install all prerequisites automatically.
 
 ## Features
 
@@ -353,20 +364,20 @@ No AWS credentials needed! LocalStack provides a local AWS environment:
 
 ```bash
 # 1. Start LocalStack with test queues
-./setup-localstack.sh
+./localstack/setup-localstack.sh
 
 # 2. Update local.settings.json with LocalStack endpoint
-# See LOCALSTACK_TESTING.md for configuration details
+# See docs/LOCALSTACK_TESTING.md for configuration details
 
 # 3. Start your function app
 cd samples/Extensions.SQS.Sample.v3
 func start
 
 # 4. Send test messages
-./send-test-message.sh
+./localstack/send-test-message.sh
 ```
 
-📖 **Complete guide:** See [LocalStack Testing Guide](./LOCALSTACK_TESTING.md) for detailed setup and usage.
+📖 **Complete guide:** See [LocalStack Testing Guide](./docs/LOCALSTACK_TESTING.md) for detailed setup and usage.
 
 # Isolated worker model
 cd test/Extensions.SQS.Test.Isolated
@@ -375,13 +386,13 @@ func start
 
 ## Migration Guide
 
-Migrating from the older `AzureFunctions.Extension.SQS` package? See the [Migration Guide](./MIGRATION_TO_ISOLATED_WORKER.md) for detailed instructions.
+Migrating from the older `AzureFunctions.Extension.SQS` package? See the [Migration Guide](./docs/MIGRATION_TO_ISOLATED_WORKER.md) for detailed instructions.
 
 ## Building from Source
 
 ```bash
 # Build both packages
-./build.sh -c Release -p
+./scripts/build.sh -c Release -p
 
 # Build specific package
 cd src/Azure.WebJobs.Extensions.SQS
@@ -395,7 +406,7 @@ dotnet build -c Release
 
 ```bash
 # Run test applications
-./test.sh --queue-url "your-queue-url" --aws-access-key-id "your-key" --aws-secret-access-key "your-secret"
+./scripts/ci-test.sh --queue-url "your-queue-url" --aws-access-key-id "your-key" --aws-secret-access-key "your-secret"
 ```
 
 ## What's New

@@ -15,7 +15,7 @@ fi
 
 # Start LocalStack
 echo "📦 Starting LocalStack container..."
-docker-compose -f docker-compose.localstack.yml up -d
+docker-compose -f "$(dirname "$0")/docker-compose.localstack.yml" up -d
 
 # Wait for LocalStack to be ready
 echo "⏳ Waiting for LocalStack to be ready..."
@@ -82,7 +82,7 @@ echo '{
 }'
 echo ""
 echo "🧪 To send a test message:"
-echo "   ./send-test-message.sh"
+echo "   ./localstack/send-test-message.sh"
 echo ""
 echo "🛑 To stop LocalStack:"
-echo "   docker-compose -f docker-compose.localstack.yml down"
+echo "   docker-compose -f localstack/docker-compose.localstack.yml down"

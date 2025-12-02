@@ -13,7 +13,7 @@ This directory contains tools for testing the Azure Functions SQS Extension with
 ### 1. Start LocalStack
 
 ```bash
-./setup-localstack.sh
+./localstack/setup-localstack.sh
 ```
 
 This script will:
@@ -79,54 +79,54 @@ func start
 
 ```bash
 # Send to default queue (test-queue)
-./send-test-message.sh
+./localstack/send-test-message.sh
 
 # Send to specific queue
-./send-test-message.sh test-queue.fifo
+./localstack/send-test-message.sh test-queue.fifo
 ```
 
 ## Available Scripts
 
-### setup-localstack.sh
+### localstack/setup-localstack.sh
 Sets up LocalStack with SQS queues for testing.
 
 **Usage:**
 ```bash
-./setup-localstack.sh
+./localstack/setup-localstack.sh
 ```
 
-### send-test-message.sh
+### localstack/send-test-message.sh
 Sends a test message to a LocalStack SQS queue.
 
 **Usage:**
 ```bash
 # Send to default queue
-./send-test-message.sh
+./localstack/send-test-message.sh
 
 # Send to specific queue
-./send-test-message.sh my-queue-name
+./localstack/send-test-message.sh my-queue-name
 ```
 
 ## Managing LocalStack
 
 ### View Logs
 ```bash
-docker-compose -f docker-compose.localstack.yml logs -f
+docker-compose -f localstack/docker-compose.localstack.yml logs -f
 ```
 
 ### Stop LocalStack
 ```bash
-docker-compose -f docker-compose.localstack.yml down
+docker-compose -f localstack/docker-compose.localstack.yml down
 ```
 
 ### Restart LocalStack
 ```bash
-docker-compose -f docker-compose.localstack.yml restart
+docker-compose -f localstack/docker-compose.localstack.yml restart
 ```
 
 ### Remove All Data
 ```bash
-docker-compose -f docker-compose.localstack.yml down -v
+docker-compose -f localstack/docker-compose.localstack.yml down -v
 ```
 
 ## Manual Queue Operations
@@ -170,7 +170,7 @@ aws --endpoint-url=http://localhost:4566 sqs purge-queue \
 ### LocalStack Not Starting
 - Check if Docker is running: `docker info`
 - Check if port 4566 is available: `lsof -i :4566`
-- View LocalStack logs: `docker-compose -f docker-compose.localstack.yml logs`
+- View LocalStack logs: `docker-compose -f localstack/docker-compose.localstack.yml logs`
 
 ### Function Not Receiving Messages
 1. Verify LocalStack is running: `curl http://localhost:4566/_localstack/health`
