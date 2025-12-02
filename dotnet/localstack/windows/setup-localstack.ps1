@@ -30,7 +30,7 @@ $ready = $false
 while ($counter -lt $timeout) {
     try {
         $health = Invoke-RestMethod -Uri "http://localhost:4566/_localstack/health" -ErrorAction SilentlyContinue
-        if ($health.services.sqs -eq "available") {
+        if ($health.services.sqs -eq "available" -or $health.services.sqs -eq "running") {
             $ready = $true
             break
         }
