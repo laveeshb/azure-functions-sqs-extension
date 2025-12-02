@@ -310,10 +310,12 @@ public class SqsSender
 
 #### 2. Update Configuration
 
+> 💡 **Key Change**: Update `FUNCTIONS_WORKER_RUNTIME` from `"dotnet"` to `"dotnet-isolated"`
+
 ```json
 {
   "Values": {
-    "FUNCTIONS_WORKER_RUNTIME": "dotnet-isolated"  // Changed from "dotnet"
+    "FUNCTIONS_WORKER_RUNTIME": "dotnet-isolated"
   }
 }
 ```
