@@ -1,6 +1,6 @@
 # Azure Functions - Amazon SQS Extension
 
-![](https://img.shields.io/badge/.NET-6.0%20|%208.0-512BD4?logo=dotnet&logoColor=white)
+![.NET 6.0 | 8.0](https://img.shields.io/badge/6.0%20|%208.0-512BD4?logo=dotnet&label=.NET&logoColor=white)
 [![NuGet - In-Process](https://img.shields.io/nuget/v/Azure.WebJobs.Extensions.SQS.svg?label=Azure.WebJobs.Extensions.SQS)](https://www.nuget.org/packages/Azure.WebJobs.Extensions.SQS)
 [![NuGet - Isolated Worker](https://img.shields.io/nuget/v/Azure.Functions.Worker.Extensions.SQS.svg?label=Azure.Functions.Worker.Extensions.SQS)](https://www.nuget.org/packages/Azure.Functions.Worker.Extensions.SQS)
 
