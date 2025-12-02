@@ -1,0 +1,156 @@
+name: Publish to NuGet
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to publish (e.g., 1.0.0)'
+        required: true
+        type: string
+      publish-inprocess:
+        description: 'Publish In-Process package (Azure.WebJobs.Extensions.SQS)'
+        required: true
+        type: boolean
+        default: true
+      publish-isolated:
+        description: 'Publish Isolated Worker package (Azure.Functions.Worker.Extensions.SQS)'
+        required: true
+        type: boolean
+        default: true
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+    
+    - name: Validate version format
+      run: |
+        if ! [[ "${{ inputs.version }}" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9]+)?$ ]]; then
+          echo "Error: Invalid version format. Expected format: X.Y.Z or X.Y.Z-preview"
+          exit 1
+        fi
+        echo "Version ${{ inputs.version }} is valid"
+    
+    - name: Update In-Process package version
+      if: inputs.publish-inprocess
+      run: |
+        sed -i 's|<Version>.*</Version>|<Version>${{ inputs.version }}</Version>|' \
+          dotnet/src/Azure.WebJobs.Extensions.SQS/Azure.WebJobs.Extensions.SQS.csproj
+    
+    - name: Update Isolated Worker package version
+      if: inputs.publish-isolated
+      run: |
+        sed -i 's|<Version>.*</Version>|<Version>${{ inputs.version }}</Version>|' \
+          dotnet/src/Azure.Functions.Worker.Extensions.SQS/Azure.Functions.Worker.Extensions.SQS.csproj
+    
+    - name: Restore dependencies
+      run: |
+        dotnet restore dotnet/src/Azure.WebJobs.Extensions.SQS/Azure.WebJobs.Extensions.SQS.csproj
+        dotnet restore dotnet/src/Azure.Functions.Worker.Extensions.SQS/Azure.Functions.Worker.Extensions.SQS.csproj
+    
+    - name: Build In-Process SDK
+      if: inputs.publish-inprocess
+      run: |
+        dotnet build dotnet/src/Azure.WebJobs.Extensions.SQS/Azure.WebJobs.Extensions.SQS.csproj \
+          --configuration Release --no-restore
+    
+    - name: Build Isolated Worker SDK
+      if: inputs.publish-isolated
+      run: |
+        dotnet build dotnet/src/Azure.Functions.Worker.Extensions.SQS/Azure.Functions.Worker.Extensions.SQS.csproj \
+          --configuration Release --no-restore
+    
+    - name: Pack In-Process SDK
+      if: inputs.publish-inprocess
+      run: |
+        dotnet pack dotnet/src/Azure.WebJobs.Extensions.SQS/Azure.WebJobs.Extensions.SQS.csproj \
+          --configuration Release --no-build --output ./packages
+    
+    - name: Pack Isolated Worker SDK
+      if: inputs.publish-isolated
+      run: |
+        dotnet pack dotnet/src/Azure.Functions.Worker.Extensions.SQS/Azure.Functions.Worker.Extensions.SQS.csproj \
+          --configuration Release --no-build --output ./packages
+    
+    - name: List packages
+      run: |
+        echo "## Packages to publish" >> $GITHUB_STEP_SUMMARY
+        ls -lh ./packages/*.nupkg | awk '{print "- " $9 " (" $5 ")"}' >> $GITHUB_STEP_SUMMARY
+        ls -lh ./packages/*.nupkg
+    
+    - name: Publish to NuGet
+      env:
+        NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+      run: |
+        for package in ./packages/*.nupkg; do
+          echo "Publishing $package..."
+          dotnet nuget push "$package" \
+            --api-key $NUGET_API_KEY \
+            --source https://api.nuget.org/v3/index.json \
+            --skip-duplicate
+        done
+    
+    - name: Create GitHub Release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: v${{ inputs.version }}
+        release_name: Release v${{ inputs.version }}
+        body: |
+          ## NuGet Packages Published
+          
+          ${{ inputs.publish-inprocess && '✅ Azure.WebJobs.Extensions.SQS v${{ inputs.version }}' || '' }}
+          ${{ inputs.publish-isolated && '✅ Azure.Functions.Worker.Extensions.SQS v${{ inputs.version }}' || '' }}
+          
+          ### Installation
+          
+          ```bash
+          # In-Process Model
+          dotnet add package Azure.WebJobs.Extensions.SQS --version ${{ inputs.version }}
+          
+          # Isolated Worker Model (Recommended)
+          dotnet add package Azure.Functions.Worker.Extensions.SQS --version ${{ inputs.version }}
+          ```
+          
+          ### Links
+          
+          - [Documentation](https://github.com/laveeshb/azure-functions-sqs-extension/blob/main/dotnet/README.md)
+          - [Migration Guide](https://github.com/laveeshb/azure-functions-sqs-extension/blob/main/dotnet/MIGRATION_TO_ISOLATED_WORKER.md)
+          - [NuGet - In-Process](https://www.nuget.org/packages/Azure.WebJobs.Extensions.SQS/${{ inputs.version }})
+          - [NuGet - Isolated Worker](https://www.nuget.org/packages/Azure.Functions.Worker.Extensions.SQS/${{ inputs.version }})
+        draft: false
+        prerelease: ${{ contains(inputs.version, '-') }}
+    
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: nuget-packages-${{ inputs.version }}
+        path: ./packages/*.nupkg
+        retention-days: 90
+    
+    - name: Publish Summary
+      run: |
+        echo "## ✅ Publish Complete" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "Version: **${{ inputs.version }}**" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        if [ "${{ inputs.publish-inprocess }}" == "true" ]; then
+          echo "- ✅ Azure.WebJobs.Extensions.SQS published to NuGet" >> $GITHUB_STEP_SUMMARY
+        fi
+        if [ "${{ inputs.publish-isolated }}" == "true" ]; then
+          echo "- ✅ Azure.Functions.Worker.Extensions.SQS published to NuGet" >> $GITHUB_STEP_SUMMARY
+        fi
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Next Steps" >> $GITHUB_STEP_SUMMARY
+        echo "1. Verify packages on [NuGet.org](https://www.nuget.org/profiles/laveeshb)" >> $GITHUB_STEP_SUMMARY
+        echo "2. GitHub release created: [v${{ inputs.version }}](https://github.com/laveeshb/azure-functions-sqs-extension/releases/tag/v${{ inputs.version }})" >> $GITHUB_STEP_SUMMARY
+        echo "3. Update documentation if needed" >> $GITHUB_STEP_SUMMARY
