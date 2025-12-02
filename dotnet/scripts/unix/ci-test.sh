@@ -4,7 +4,7 @@ set -e
 # Script to run Azure Functions SQS Extension tests
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-DOTNET_DIR="$SCRIPT_DIR/dotnet"
+DOTNET_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
 # Default options
 RUN_INPROCESS=true

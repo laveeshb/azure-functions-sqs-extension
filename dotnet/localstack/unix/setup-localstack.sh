@@ -5,6 +5,9 @@
 
 set -e
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+LOCALSTACK_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+
 echo "🚀 Starting LocalStack for SQS testing..."
 
 # Check if Docker is running
@@ -15,7 +18,7 @@ fi
 
 # Start LocalStack
 echo "📦 Starting LocalStack container..."
-docker-compose -f "$(dirname "$0")/docker-compose.localstack.yml" up -d
+docker-compose -f "$LOCALSTACK_DIR/docker-compose.localstack.yml" up -d
 
 # Wait for LocalStack to be ready
 echo "⏳ Waiting for LocalStack to be ready..."

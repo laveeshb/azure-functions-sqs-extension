@@ -8,10 +8,11 @@ set -e
 echo "🧹 Cleaning up LocalStack resources..."
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+LOCALSTACK_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 # Stop and remove containers
 echo "🛑 Stopping and removing LocalStack containers..."
-docker-compose -f "$SCRIPT_DIR/docker-compose.localstack.yml" down -v
+docker-compose -f "$LOCALSTACK_DIR/docker-compose.localstack.yml" down -v
 
 # Remove LocalStack images (optional)
 read -p "Do you want to remove LocalStack images as well? (y/N) " -n 1 -r
