@@ -328,6 +328,28 @@ For local development without connecting to AWS, we provide LocalStack integrati
 
 # Windows: Start LocalStack with test queues
 .\localstack\windows\setup-localstack.ps1
+```
+
+**Configure your function to use LocalStack:**
+```csharp
+// Use ServiceUrl parameter to point to LocalStack
+[SqsQueueTrigger(
+    QueueUrl = "%SQS_QUEUE_URL%",
+    ServiceUrl = "%SQS_SERVICE_URL%",  // http://localhost:4566
+    Region = "us-east-1")]
+```
+
+In `local.settings.json`:
+```json
+{
+  "Values": {
+    "SQS_QUEUE_URL": "http://localhost:4566/000000000000/test-queue",
+    "SQS_SERVICE_URL": "http://localhost:4566"
+  }
+}
+```
+
+> **Note:** When using `ServiceUrl`, the `Region` parameter is required.
 
 # Send test messages (Linux/macOS)
 ./localstack/unix/send-test-message.sh

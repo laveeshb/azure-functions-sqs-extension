@@ -41,38 +41,45 @@ Update your function app's `local.settings.json` with LocalStack settings:
     "AWS_REGION": "us-east-1",
     "AWS_ACCESS_KEY_ID": "test",
     "AWS_SECRET_ACCESS_KEY": "test",
-    "AWS_ENDPOINT_URL": "http://localhost:4566"
+    "SQS_QUEUE_URL": "http://localhost:4566/000000000000/test-queue",
+    "SQS_SERVICE_URL": "http://localhost:4566"
   }
 }
 ```
 
 ### 3. Update Extension Configuration
 
-For the SQS extension to connect to LocalStack, you need to configure it to use the custom endpoint:
+For the SQS extension to connect to LocalStack, use the `ServiceUrl` parameter:
 
 **In-Process Model:**
 ```csharp
 [FunctionName("ProcessSQSMessage")]
 public static void Run(
-    [SqsQueueTrigger("test-queue", Connection = "AWS")] string message,
+    [SqsQueueTrigger(
+        QueueUrl = "%SQS_QUEUE_URL%",
+        ServiceUrl = "%SQS_SERVICE_URL%",
+        Region = "us-east-1")] Message message,
     ILogger log)
 {
-    log.LogInformation($"Received message: {message}");
+    log.LogInformation($"Received message: {message.MessageId}");
+    log.LogInformation($"Body: {message.Body}");
 }
-```
-
-In `local.settings.json`, add:
-```json
-"AWS:ServiceURL": "http://localhost:4566"
 ```
 
 **Isolated Worker Model:**
 ```csharp
 [Function("ProcessSQSMessage")]
-public void Run([SqsQueueTrigger("test-queue")] string message)
+public void Run(
+    [SqsTrigger(
+        queueUrl: "%SQS_QUEUE_URL%",
+        ServiceUrl = "%SQS_SERVICE_URL%",
+        Region = "us-east-1")] Message message)
 {
-    _logger.LogInformation($"Received message: {message}");
+    _logger.LogInformation($"Received message: {message.MessageId}");
 }
+```
+
+> **Note:** When using `ServiceUrl`, the `Region` parameter is required.
 ```
 
 ### 4. Start Your Function App
