@@ -15,7 +15,7 @@ This repository provides Azure Functions extensions to integrate with [Amazon SQ
 | Language | Status | Documentation |
 |----------|--------|---------------|
 | **.NET** | ✅ Available | [Documentation](./dotnet/README.md) |
-| **Python** | 🚧 Coming soon | - |
+| **Python** | ✅ Available | [Documentation](./python/README.md) |
 | **Java** | 🚧 Coming soon | - |
 | **JavaScript/TypeScript** | 🚧 Coming soon | - |
 
@@ -37,7 +37,24 @@ For .NET developers, this extension provides two packages supporting both hostin
 📖 **[See full .NET documentation](./dotnet/README.md)**
 🧪 **[LocalStack testing guide](./dotnet/localstack/README.md)**
 
-## 📜 History & Attribution
+## � Python Extension
+
+For Python developers, install the native package:
+
+```bash
+pip install azure-functions-sqs
+```
+
+**Features:**
+- ⚡ `SqsTrigger` - Poll SQS queues with automatic message deletion
+- 📤 `SqsOutput` - Send messages via function return values
+- 📦 `SqsCollector` - Batch send multiple messages efficiently
+- 🔐 AWS credential chain support (environment variables, IAM roles)
+- 🐳 LocalStack support for local development
+
+📖 **[See full Python documentation](./python/README.md)**
+
+## �📜 History & Attribution
 
 This repository is a continuation of the SQS extension originally developed as part of the [azure-function-extensions-net](https://github.com/laveeshb/azure-function-extensions-net) repository. The code has been extracted with full commit history to support multi-language development and focused maintenance.
 
