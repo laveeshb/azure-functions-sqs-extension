@@ -21,7 +21,7 @@ public class SqsTriggerFunction
     /// </summary>
     [Function(nameof(ProcessSqsMessage))]
     public void ProcessSqsMessage(
-        [SqsTrigger("%SQS_QUEUE_URL%")] Message message)
+        [SqsTrigger("%SQS_QUEUE_URL%", ServiceUrl = "%SQS_SERVICE_URL%", Region = "%AWS_REGION%")] Message message)
     {
         _logger.LogInformation("=== SQS Message Received ===");
         _logger.LogInformation("Message ID: {MessageId}", message.MessageId);
@@ -37,18 +37,16 @@ public class SqsTriggerFunction
         _logger.LogInformation("Message processed successfully");
     }
 
-    /// <summary>
-    /// Example with async processing
-    /// </summary>
-    [Function(nameof(ProcessSqsMessageAsync))]
-    public async Task ProcessSqsMessageAsync(
-        [SqsTrigger("%SQS_QUEUE_URL%")] Message message)
-    {
-        _logger.LogInformation("Processing message asynchronously: {MessageId}", message.MessageId);
-
-        // Simulate async work
-        await Task.Delay(100);
-
-        _logger.LogInformation("Async processing completed for: {MessageId}", message.MessageId);
-    }
+    // Commented out to avoid duplicate triggers on the same queue
+    // /// <summary>
+    // /// Example with async processing
+    // /// </summary>
+    // [Function(nameof(ProcessSqsMessageAsync))]
+    // public async Task ProcessSqsMessageAsync(
+    //     [SqsTrigger("%SQS_QUEUE_URL%", ServiceUrl = "%SQS_SERVICE_URL%", Region = "%AWS_REGION%")] Message message)
+    // {
+    //     _logger.LogInformation("Processing message asynchronously: {MessageId}", message.MessageId);
+    //     await Task.Delay(100);
+    //     _logger.LogInformation("Async processing completed for: {MessageId}", message.MessageId);
+    // }
 }

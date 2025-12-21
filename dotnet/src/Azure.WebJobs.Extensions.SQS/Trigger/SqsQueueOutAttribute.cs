@@ -31,4 +31,12 @@ public class SqsQueueOutAttribute : Attribute
     /// </summary>
     [AutoResolve]
     public string? Region { get; set; }
+
+    /// <summary>
+    /// Custom SQS service URL for LocalStack or other SQS-compatible services.
+    /// Example: "http://localhost:4566" for LocalStack.
+    /// When specified, Region must also be provided.
+    /// </summary>
+    [AutoResolve]
+    public string? ServiceUrl { get; set; }
 }

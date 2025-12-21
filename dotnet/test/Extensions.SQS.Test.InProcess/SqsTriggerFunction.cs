@@ -18,7 +18,7 @@ public class SqsTriggerFunction
     /// </summary>
     [FunctionName(nameof(ProcessSqsMessage))]
     public void ProcessSqsMessage(
-        [SqsQueueTrigger(QueueUrl = "%SQS_QUEUE_URL%")] Message message,
+        [SqsQueueTrigger(QueueUrl = "%SQS_QUEUE_URL%", ServiceUrl = "%SQS_SERVICE_URL%", Region = "%AWS_REGION%")] Message message,
         ILogger log)
     {
         log.LogInformation("=== SQS Message Received (In-Process Model) ===");
@@ -35,30 +35,28 @@ public class SqsTriggerFunction
         log.LogInformation("Message processed successfully");
     }
 
-    /// <summary>
-    /// Example with async processing
-    /// </summary>
-    [FunctionName(nameof(ProcessSqsMessageAsync))]
-    public async Task ProcessSqsMessageAsync(
-        [SqsQueueTrigger(QueueUrl = "%SQS_QUEUE_URL%")] Message message,
-        ILogger log)
-    {
-        log.LogInformation("Processing message asynchronously (In-Process Model): {MessageId}", message.MessageId);
+    // Commented out to avoid duplicate triggers on the same queue
+    // /// <summary>
+    // /// Example with async processing
+    // /// </summary>
+    // [FunctionName(nameof(ProcessSqsMessageAsync))]
+    // public async Task ProcessSqsMessageAsync(
+    //     [SqsQueueTrigger(QueueUrl = "%SQS_QUEUE_URL%", ServiceUrl = "%SQS_SERVICE_URL%", Region = "%AWS_REGION%")] Message message,
+    //     ILogger log)
+    // {
+    //     log.LogInformation("Processing message asynchronously (In-Process Model): {MessageId}", message.MessageId);
+    //     await Task.Delay(100);
+    //     log.LogInformation("Async processing completed for: {MessageId}", message.MessageId);
+    // }
 
-        // Simulate async work
-        await Task.Delay(100);
-
-        log.LogInformation("Async processing completed for: {MessageId}", message.MessageId);
-    }
-
-    /// <summary>
-    /// Example with string body binding instead of full Message object
-    /// </summary>
-    [FunctionName(nameof(ProcessSqsMessageBody))]
-    public void ProcessSqsMessageBody(
-        [SqsQueueTrigger(QueueUrl = "%SQS_QUEUE_URL%")] string messageBody,
-        ILogger log)
-    {
-        log.LogInformation("Received message body (In-Process Model): {Body}", messageBody);
-    }
+    // /// <summary>
+    // /// Example with string body binding instead of full Message object
+    // /// </summary>
+    // [FunctionName(nameof(ProcessSqsMessageBody))]
+    // public void ProcessSqsMessageBody(
+    //     [SqsQueueTrigger(QueueUrl = "%SQS_QUEUE_URL%", ServiceUrl = "%SQS_SERVICE_URL%", Region = "%AWS_REGION%")] string messageBody,
+    //     ILogger log)
+    // {
+    //     log.LogInformation("Received message body (In-Process Model): {Body}", messageBody);
+    // }
 }

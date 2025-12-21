@@ -38,7 +38,8 @@ public class SqsQueueTriggerBindingProvider : ITriggerBindingProvider
             AWSKeyId = Resolve(triggerAttribute.AWSKeyId),
             AWSAccessKey = Resolve(triggerAttribute.AWSAccessKey),
             QueueUrl = Resolve(triggerAttribute.QueueUrl) ?? triggerAttribute.QueueUrl,
-            Region = Resolve(triggerAttribute.Region)
+            Region = Resolve(triggerAttribute.Region),
+            ServiceUrl = Resolve(triggerAttribute.ServiceUrl)
         };
     }
 

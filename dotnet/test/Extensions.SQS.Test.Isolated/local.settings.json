@@ -3,7 +3,11 @@
   "Values": {
     "AzureWebJobsStorage": "UseDevelopmentStorage=true",
     "FUNCTIONS_WORKER_RUNTIME": "dotnet-isolated",
-    "SQS_QUEUE_URL": "",
-    "SQS_OUTPUT_QUEUE_URL": ""
+    "SQS_QUEUE_URL": "http://localhost:4566/000000000000/test-queue",
+    "SQS_OUTPUT_QUEUE_URL": "http://localhost:4566/000000000000/test-output-queue",
+    "SQS_SERVICE_URL": "http://localhost:4566",
+    "AWS_ACCESS_KEY_ID": "test",
+    "AWS_SECRET_ACCESS_KEY": "test",
+    "AWS_REGION": "us-east-1"
   }
 }

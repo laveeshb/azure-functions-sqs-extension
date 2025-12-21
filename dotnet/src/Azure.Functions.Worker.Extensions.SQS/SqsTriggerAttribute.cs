@@ -41,6 +41,13 @@ public sealed class SqsTriggerAttribute : TriggerBindingAttribute
     public string? Region { get; set; }
 
     /// <summary>
+    /// Gets or sets a custom SQS service URL for LocalStack or other SQS-compatible services.
+    /// Example: "http://localhost:4566" for LocalStack.
+    /// When specified, Region must also be provided.
+    /// </summary>
+    public string? ServiceUrl { get; set; }
+
+    /// <summary>
     /// Gets or sets the maximum number of messages to retrieve in a single batch (1-10). Default is 10.
     /// </summary>
     public int MaxNumberOfMessages { get; set; } = 10;
