@@ -15,13 +15,14 @@ using Microsoft.Extensions.Options;
 
 public class SqsQueueTriggerListener : IListener
 {
-    private Timer? _triggerTimer;
+    private Task? _pollingTask;
     private AmazonSQSClient? _amazonSqsClient;
     private CancellationTokenSource? _cancellationTokenSource;
     private readonly IOptions<SqsQueueOptions> _sqsQueueOptions;
     private readonly SqsQueueTriggerAttribute _triggerParameters;
     private readonly ITriggeredFunctionExecutor _executor;
     private readonly ILogger? _logger;
+    private volatile bool _isRunning;
     private bool _disposed;
 
     public SqsQueueTriggerListener(
@@ -53,12 +54,10 @@ public class SqsQueueTriggerListener : IListener
         if (_disposed)
             return;
 
+        _isRunning = false;
         _cancellationTokenSource?.Cancel();
         _cancellationTokenSource?.Dispose();
         _cancellationTokenSource = null;
-
-        _triggerTimer?.Dispose();
-        _triggerTimer = null;
 
         _amazonSqsClient?.Dispose();
         _amazonSqsClient = null;
@@ -72,60 +71,87 @@ public class SqsQueueTriggerListener : IListener
             throw new ObjectDisposedException(nameof(SqsQueueTriggerListener));
 
         _cancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        _isRunning = true;
         
-        _triggerTimer = new Timer(
-            callback: async (state) => await OnTriggerCallbackAsync(_cancellationTokenSource.Token),
-            state: null,
-            dueTime: TimeSpan.Zero,
-            period: _sqsQueueOptions.Value.PollingInterval!.Value);
+        // Start background polling loop instead of timer to avoid overlapping polls
+        _pollingTask = Task.Run(() => PollLoopAsync(_cancellationTokenSource.Token));
 
         _logger?.LogInformation(
-            "Started SQS trigger listener for queue: {QueueUrl}, polling every {PollingInterval}",
-            _triggerParameters.QueueUrl,
-            _sqsQueueOptions.Value.PollingInterval);
+            "Started SQS trigger listener for queue: {QueueUrl}",
+            _triggerParameters.QueueUrl);
 
         return Task.CompletedTask;
     }
 
-    private async Task OnTriggerCallbackAsync(CancellationToken cancellationToken)
+    private async Task PollLoopAsync(CancellationToken cancellationToken)
     {
-        if (_disposed || cancellationToken.IsCancellationRequested || _amazonSqsClient == null)
-            return;
-
-        try
+        while (_isRunning && !cancellationToken.IsCancellationRequested)
         {
-            var receiveMessageRequest = new ReceiveMessageRequest
+            try
             {
-                QueueUrl = _triggerParameters.QueueUrl,
-                MaxNumberOfMessages = _sqsQueueOptions.Value.MaxNumberOfMessages!.Value,
-                VisibilityTimeout = (int)_sqsQueueOptions.Value.VisibilityTimeout!.Value.TotalSeconds,
-                WaitTimeSeconds = 20, // Enable long polling
-                MessageAttributeNames = ["All"],
-                AttributeNames = ["All"] // Request all message attributes
-            };
-
-            var result = await _amazonSqsClient.ReceiveMessageAsync(receiveMessageRequest, cancellationToken);
-            
-            if (result.Messages.Count > 0)
+                var messagesReceived = await PollAndProcessAsync(cancellationToken);
+                
+                // If no messages were received, wait before polling again
+                // Long polling already waits up to 20s, so this is just an additional delay
+                if (messagesReceived == 0 && _sqsQueueOptions.Value.PollingInterval.HasValue)
+                {
+                    await Task.Delay(_sqsQueueOptions.Value.PollingInterval.Value, cancellationToken);
+                }
+                // If messages were received, poll again immediately (more might be waiting)
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
-                _logger?.LogDebug(
-                    "Received {MessageCount} messages from queue: {QueueUrl}",
-                    result.Messages.Count,
+                break; // Clean shutdown
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, 
+                    "Error in polling loop for queue: {QueueUrl}. Retrying in 5 seconds.", 
                     _triggerParameters.QueueUrl);
-
-                await Task.WhenAll(result.Messages.Select(message => ProcessMessageAsync(message, cancellationToken)));
+                
+                // Wait before retrying to avoid tight error loop
+                try
+                {
+                    await Task.Delay(TimeSpan.FromSeconds(5), cancellationToken);
+                }
+                catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+                {
+                    break;
+                }
             }
         }
-        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        
+        _logger?.LogDebug("Polling loop exited for queue: {QueueUrl}", _triggerParameters.QueueUrl);
+    }
+
+    private async Task<int> PollAndProcessAsync(CancellationToken cancellationToken)
+    {
+        if (_disposed || cancellationToken.IsCancellationRequested || _amazonSqsClient == null)
+            return 0;
+
+        var receiveMessageRequest = new ReceiveMessageRequest
         {
-            // Expected during shutdown
-        }
-        catch (Exception ex)
+            QueueUrl = _triggerParameters.QueueUrl,
+            MaxNumberOfMessages = _sqsQueueOptions.Value.MaxNumberOfMessages!.Value,
+            VisibilityTimeout = (int)_sqsQueueOptions.Value.VisibilityTimeout!.Value.TotalSeconds,
+            WaitTimeSeconds = 20, // Enable long polling
+            MessageAttributeNames = ["All"],
+            AttributeNames = ["All"] // Request all message attributes
+        };
+
+        var result = await _amazonSqsClient.ReceiveMessageAsync(receiveMessageRequest, cancellationToken);
+        
+        if (result.Messages.Count > 0)
         {
-            _logger?.LogError(ex, 
-                "Error polling SQS queue: {QueueUrl}", 
+            _logger?.LogDebug(
+                "Received {MessageCount} messages from queue: {QueueUrl}",
+                result.Messages.Count,
                 _triggerParameters.QueueUrl);
+
+            await Task.WhenAll(result.Messages.Select(message => ProcessMessageAsync(message, cancellationToken)));
         }
+        
+        return result.Messages.Count;
     }
 
     private async Task ProcessMessageAsync(Message message, CancellationToken cancellationToken)
@@ -178,13 +204,29 @@ public class SqsQueueTriggerListener : IListener
         }
     }
 
-    public Task StopAsync(CancellationToken cancellationToken)
+    public async Task StopAsync(CancellationToken cancellationToken)
     {
         _logger?.LogInformation(
             "Stopping SQS trigger listener for queue: {QueueUrl}",
             _triggerParameters.QueueUrl);
 
+        _isRunning = false;
+        _cancellationTokenSource?.Cancel();
+        
+        // Wait for polling loop to complete gracefully
+        if (_pollingTask != null)
+        {
+            try
+            {
+                // Wait up to 30 seconds for the polling loop to finish
+                await Task.WhenAny(_pollingTask, Task.Delay(TimeSpan.FromSeconds(30), cancellationToken));
+            }
+            catch (OperationCanceledException)
+            {
+                // Expected if cancellation is requested during shutdown
+            }
+        }
+
         Dispose();
-        return Task.CompletedTask;
     }
 }
