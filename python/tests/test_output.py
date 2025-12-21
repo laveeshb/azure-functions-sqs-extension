@@ -3,8 +3,6 @@
 import json
 from unittest.mock import MagicMock, patch
 
-import pytest
-
 from azure_functions_sqs.output import SqsCollector, SqsOutput, SqsOutputOptions
 
 

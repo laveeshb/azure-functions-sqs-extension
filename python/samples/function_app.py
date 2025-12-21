@@ -14,6 +14,7 @@ from azure_functions_sqs import (
     SqsTrigger,
     SqsTriggerOptions,
     SqsOutput,
+    SqsOutputOptions,
     SqsCollector,
 )
 from datetime import timedelta
@@ -140,7 +141,7 @@ fifo_output = SqsOutput(
     queue_url="%FIFO_QUEUE_URL%",  # Must end with .fifo
     aws_key_id="%AWS_ACCESS_KEY_ID%",
     aws_access_key="%AWS_SECRET_ACCESS_KEY%",
-    message_group_id="default-group",  # Required for FIFO queues
+    options=SqsOutputOptions(message_group_id="default-group"),  # Required for FIFO queues
 )
 
 

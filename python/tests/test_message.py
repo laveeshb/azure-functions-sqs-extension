@@ -1,7 +1,5 @@
 """Tests for SqsMessage model."""
 
-import pytest
-
 from azure_functions_sqs.message import MessageAttributeValue, SqsMessage
 
 

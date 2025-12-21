@@ -1,8 +1,9 @@
 """SQS Output binding - sends messages to SQS queue."""
 
+import functools
 import json
 import logging
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any, Callable, TypeVar
 
 from azure_functions_sqs.client import SqsClient
@@ -77,6 +78,7 @@ class SqsOutput:
     def __call__(self, func: Callable[..., T]) -> Callable[..., T]:
         """Decorator to wrap the function and send return value to SQS."""
 
+        @functools.wraps(func)
         def wrapper(*args: Any, **kwargs: Any) -> T:
             result = func(*args, **kwargs)
             self._send_message(result)
@@ -112,7 +114,18 @@ class SqsOutput:
         if isinstance(value, str):
             body = value
         elif isinstance(value, (dict, list)):
-            body = json.dumps(value)
+            try:
+                body = json.dumps(value)
+            except (TypeError, ValueError) as exc:
+                logger.error(
+                    "Failed to JSON serialize SQS message body of type %s: %s",
+                    type(value).__name__,
+                    exc,
+                )
+                raise TypeError(
+                    f"Failed to JSON serialize SQS message body of type "
+                    f"{type(value).__name__}"
+                ) from exc
         else:
             body = str(value)
 
@@ -176,7 +189,19 @@ class SqsCollector:
         if isinstance(message, str):
             self._messages.append(message)
         elif isinstance(message, (dict, list)):
-            self._messages.append(json.dumps(message))
+            try:
+                self._messages.append(json.dumps(message))
+            except (TypeError, ValueError) as exc:
+                logger.error(
+                    "Failed to JSON serialize message of type %s: %r",
+                    type(message).__name__,
+                    message,
+                )
+                raise TypeError(
+                    "Message added to SqsCollector is not JSON serializable. "
+                    "Ensure that dicts/lists only contain JSON-serializable "
+                    "types such as str, int, float, bool, None, or nested dicts/lists."
+                ) from exc
         else:
             self._messages.append(str(message))
 

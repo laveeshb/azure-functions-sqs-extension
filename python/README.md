@@ -146,7 +146,6 @@ def process(message: SqsMessage) -> None:
     # Timestamps and counts
     print(message.sent_timestamp)
     print(message.approximate_receive_count)
-    print(message.approximate_first_receive_timestamp)
     
     # FIFO queue properties
     print(message.message_group_id)

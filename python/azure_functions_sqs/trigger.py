@@ -77,6 +77,7 @@ class SqsTrigger:
         self.options = options or SqsTriggerOptions()
 
         self._client: SqsClient | None = None
+        self._handler: Callable[[SqsMessage], Any] | None = None
         self._running = False
         self._polling_task: asyncio.Task[None] | None = None
 
@@ -101,6 +102,12 @@ class SqsTrigger:
         if self._running:
             return
 
+        if self._handler is None:
+            raise RuntimeError(
+                "No handler registered. Use @trigger decorator to register a handler "
+                "before calling start_async()."
+            )
+
         self._running = True
         logger.info("Starting SQS trigger for queue: %s", self.queue_url)
         self._polling_task = asyncio.create_task(self._poll_loop_async())
@@ -118,6 +125,7 @@ class SqsTrigger:
                 logger.warning("Polling task did not complete within 30 seconds")
                 self._polling_task.cancel()
             except asyncio.CancelledError:
+                # Task cancellation is expected during shutdown; no further action needed.
                 pass
 
     async def _poll_loop_async(self) -> None:

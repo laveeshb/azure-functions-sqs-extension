@@ -28,11 +28,13 @@ class MessageAttributeValue:
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for JSON serialization."""
+        import base64
         result: dict[str, Any] = {"DataType": self.data_type}
         if self.string_value is not None:
             result["StringValue"] = self.string_value
         if self.binary_value is not None:
-            result["BinaryValue"] = self.binary_value.decode("utf-8", errors="replace")
+            # Use base64 encoding for binary data to ensure safe JSON serialization
+            result["BinaryValue"] = base64.b64encode(self.binary_value).decode("ascii")
         return result
 
 
