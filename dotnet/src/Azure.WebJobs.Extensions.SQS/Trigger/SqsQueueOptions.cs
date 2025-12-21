@@ -11,7 +11,9 @@ public class SqsQueueOptions
     public int? MaxNumberOfMessages { get; set; }
 
     /// <summary>
-    /// Interval between polling requests to SQS
+    /// Delay between polling requests when the queue is empty.
+    /// Note: SQS long polling (20s) already waits for messages, so this is an additional delay.
+    /// Set to zero or null for immediate re-poll after long poll completes.
     /// </summary>
     public TimeSpan? PollingInterval { get; set; }
 
