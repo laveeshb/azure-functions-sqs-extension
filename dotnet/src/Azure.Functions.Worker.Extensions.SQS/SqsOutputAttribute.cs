@@ -37,4 +37,11 @@ public sealed class SqsOutputAttribute : OutputBindingAttribute
     /// Gets or sets the AWS Region (e.g., "us-east-1"). If not specified, uses AWS credential chain.
     /// </summary>
     public string? Region { get; set; }
+
+    /// <summary>
+    /// Gets or sets a custom SQS service URL for LocalStack or other SQS-compatible services.
+    /// Example: "http://localhost:4566" for LocalStack.
+    /// When specified, Region must also be provided.
+    /// </summary>
+    public string? ServiceUrl { get; set; }
 }
