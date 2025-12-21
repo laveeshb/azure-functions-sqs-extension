@@ -37,7 +37,7 @@ For .NET developers, this extension provides two packages supporting both hostin
 📖 **[See full .NET documentation](./dotnet/README.md)**
 🧪 **[LocalStack testing guide](./dotnet/localstack/README.md)**
 
-## � Python Extension
+## 🐍 Python Extension
 
 For Python developers, install the native package:
 
@@ -54,7 +54,7 @@ pip install azure-functions-sqs
 
 📖 **[See full Python documentation](./python/README.md)**
 
-## �📜 History & Attribution
+## 📜 History & Attribution
 
 This repository is a continuation of the SQS extension originally developed as part of the [azure-function-extensions-net](https://github.com/laveeshb/azure-function-extensions-net) repository. The code has been extracted with full commit history to support multi-language development and focused maintenance.
 

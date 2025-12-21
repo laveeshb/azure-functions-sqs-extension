@@ -118,13 +118,13 @@ class SqsOutput:
                 body = json.dumps(value)
             except (TypeError, ValueError) as exc:
                 logger.error(
-                    "Failed to JSON serialize SQS message body of type %s: %s",
+                    "Failed to JSON serialize message of type %s: %s",
                     type(value).__name__,
                     exc,
                 )
                 raise TypeError(
-                    f"Failed to JSON serialize SQS message body of type "
-                    f"{type(value).__name__}"
+                    f"Message is not JSON serializable. Type: {type(value).__name__}. "
+                    f"Ensure dicts/lists only contain JSON-serializable types."
                 ) from exc
         else:
             body = str(value)

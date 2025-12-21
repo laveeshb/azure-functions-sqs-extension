@@ -44,6 +44,13 @@ class SqsClient:
         access_key = self._resolve_env_var(aws_access_key_id)
         secret_key = self._resolve_env_var(aws_secret_access_key)
 
+        # Warn if only one credential is provided
+        if (access_key and not secret_key) or (secret_key and not access_key):
+            logger.warning(
+                "Only one AWS credential provided (access_key_id or secret_access_key). "
+                "Both are required for explicit credentials. Falling back to credential chain."
+            )
+
         # Build boto3 client
         config = Config(
             retries={"max_attempts": 3, "mode": "adaptive"},
@@ -55,7 +62,7 @@ class SqsClient:
             "config": config,
         }
 
-        # Only pass credentials if explicitly provided
+        # Only pass credentials if both are explicitly provided
         if access_key and secret_key:
             client_kwargs["aws_access_key_id"] = access_key
             client_kwargs["aws_secret_access_key"] = secret_key

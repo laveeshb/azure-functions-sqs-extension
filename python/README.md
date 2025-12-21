@@ -165,11 +165,13 @@ def process(message: SqsMessage) -> None:
 For FIFO queues (queue URL ends with `.fifo`):
 
 ```python
+from azure_functions_sqs import SqsOutput, SqsOutputOptions
+
 output = SqsOutput(
     queue_url="%FIFO_QUEUE_URL%",
     aws_key_id="%AWS_ACCESS_KEY_ID%",
     aws_access_key="%AWS_SECRET_ACCESS_KEY%",
-    message_group_id="my-group",  # Required for FIFO
+    options=SqsOutputOptions(message_group_id="my-group"),  # Required for FIFO
 )
 ```
 

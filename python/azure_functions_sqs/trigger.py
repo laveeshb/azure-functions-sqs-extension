@@ -11,6 +11,10 @@ from azure_functions_sqs.message import SqsMessage
 
 logger = logging.getLogger(__name__)
 
+# Constants for timeouts and polling
+DEFAULT_LONG_POLLING_SECONDS = 20
+DEFAULT_SHUTDOWN_TIMEOUT_SECONDS = 30.0
+
 
 @dataclass
 class SqsTriggerOptions:
@@ -118,11 +122,16 @@ class SqsTrigger:
         self._running = False
 
         if self._polling_task:
-            # Wait up to 30 seconds for current poll to complete
+            # Wait for current poll to complete
             try:
-                await asyncio.wait_for(self._polling_task, timeout=30.0)
+                await asyncio.wait_for(
+                    self._polling_task, timeout=DEFAULT_SHUTDOWN_TIMEOUT_SECONDS
+                )
             except asyncio.TimeoutError:
-                logger.warning("Polling task did not complete within 30 seconds")
+                logger.warning(
+                    "Polling task did not complete within %.0f seconds",
+                    DEFAULT_SHUTDOWN_TIMEOUT_SECONDS,
+                )
                 self._polling_task.cancel()
             except asyncio.CancelledError:
                 # Task cancellation is expected during shutdown; no further action needed.
@@ -143,7 +152,7 @@ class SqsTrigger:
                     client.receive_messages,
                     max_number_of_messages=self.options.max_number_of_messages,
                     visibility_timeout=int(self.options.visibility_timeout.total_seconds()),
-                    wait_time_seconds=20,  # Long polling
+                    wait_time_seconds=DEFAULT_LONG_POLLING_SECONDS,
                 )
 
                 if messages:
