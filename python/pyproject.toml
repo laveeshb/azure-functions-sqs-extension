@@ -1,0 +1,67 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "azure-functions-sqs"
+version = "1.0.0"
+description = "AWS SQS bindings for Azure Functions"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.9"
+authors = [
+    { name = "Laveesh Bansal", email = "laveeshbansal@gmail.com" }
+]
+keywords = ["azure", "functions", "aws", "sqs", "serverless"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+dependencies = [
+    "azure-functions>=1.17.0",
+    "boto3>=1.26.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-asyncio>=0.21.0",
+    "moto[sqs]>=4.0.0",
+    "ruff>=0.1.0",
+    "mypy>=1.0.0",
+    "boto3-stubs[sqs]>=1.26.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/laveeshb/azure-functions-sqs-extension"
+Documentation = "https://github.com/laveeshb/azure-functions-sqs-extension/tree/main/python"
+Repository = "https://github.com/laveeshb/azure-functions-sqs-extension"
+Issues = "https://github.com/laveeshb/azure-functions-sqs-extension/issues"
+
+[tool.hatch.build.targets.wheel]
+packages = ["azure_functions_sqs"]
+
+[tool.ruff]
+target-version = "py39"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "UP", "B", "C4", "SIM"]
+
+[tool.mypy]
+python_version = "3.9"
+strict = true
+warn_return_any = true
+warn_unused_configs = true
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
