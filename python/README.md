@@ -2,6 +2,17 @@
 
 A Python package that enables Azure Functions to integrate with Amazon SQS (Simple Queue Service) for both trigger-based and output binding scenarios.
 
+## 📁 Repository Structure
+
+```
+python/
+├── azure_functions_sqs/   # Source code for the package
+├── tests/                 # Unit tests
+├── samples/               # Sample function app
+├── pyproject.toml         # Package configuration
+└── README.md              # This documentation
+```
+
 ## Installation
 
 ```bash
@@ -178,6 +189,35 @@ trigger = SqsTrigger(
 )
 ```
 
+See the [LocalStack testing guide](../dotnet/localstack/README.md) for setting up LocalStack with Docker.
+
+## Sample Application
+
+A complete sample function app is available in the [`samples/`](./samples/) directory:
+
+- [`function_app.py`](./samples/function_app.py) - Complete examples of trigger, output, and batch sending
+- [`host.json`](./samples/host.json) - Azure Functions host configuration
+- [`local.settings.json`](./samples/local.settings.json) - Local development settings template
+
+## Building from Source
+
+```bash
+# Clone the repository
+git clone https://github.com/laveeshb/azure-functions-sqs-extension.git
+cd azure-functions-sqs-extension/python
+
+# Create virtual environment
+python -m venv .venv
+source .venv/bin/activate  # Linux/macOS
+# .venv\Scripts\activate   # Windows
+
+# Install in development mode with test dependencies
+pip install -e ".[dev]"
+
+# Run tests
+pytest tests/ -v
+```
+
 ## Comparison with .NET Extension
 
 This Python package is designed to match the .NET extension's contracts:
@@ -195,6 +235,10 @@ This Python package is designed to match the .NET extension's contracts:
 - Python 3.9+
 - boto3 >= 1.26.0
 - azure-functions >= 1.17.0
+
+## Support
+
+For issues, questions, or feature requests, please [open an issue](https://github.com/laveeshb/azure-functions-sqs-extension/issues).
 
 ## License
 
