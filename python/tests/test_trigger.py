@@ -33,6 +33,26 @@ class TestSqsTriggerOptions:
         assert options.visibility_timeout.total_seconds() == 60
         assert options.polling_interval.total_seconds() == 15
 
+    def test_invalid_max_number_of_messages_too_low(self) -> None:
+        """Test that max_number_of_messages below 1 raises ValueError."""
+        with pytest.raises(ValueError, match="max_number_of_messages must be between 1 and 10"):
+            SqsTriggerOptions(max_number_of_messages=0)
+
+    def test_invalid_max_number_of_messages_too_high(self) -> None:
+        """Test that max_number_of_messages above 10 raises ValueError."""
+        with pytest.raises(ValueError, match="max_number_of_messages must be between 1 and 10"):
+            SqsTriggerOptions(max_number_of_messages=15)
+
+    def test_invalid_visibility_timeout_negative(self) -> None:
+        """Test that negative visibility_timeout raises ValueError."""
+        with pytest.raises(ValueError, match="visibility_timeout must be non-negative"):
+            SqsTriggerOptions(visibility_timeout=timedelta(seconds=-1))
+
+    def test_invalid_polling_interval_negative(self) -> None:
+        """Test that negative polling_interval raises ValueError."""
+        with pytest.raises(ValueError, match="polling_interval must be non-negative"):
+            SqsTriggerOptions(polling_interval=timedelta(seconds=-5))
+
 
 class TestSqsTrigger:
     """Tests for SqsTrigger."""

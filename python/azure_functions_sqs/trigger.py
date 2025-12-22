@@ -150,8 +150,8 @@ class SqsTrigger:
                 )
                 self._polling_task.cancel()
             except asyncio.CancelledError:
-                # Task cancellation is expected during shutdown; no further action needed.
-                pass
+                # Re-raise to allow proper cancellation propagation
+                raise
 
     async def _poll_loop_async(self) -> None:
         """

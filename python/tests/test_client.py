@@ -165,3 +165,55 @@ class TestSqsClientOperations:
         call_kwargs = mock_client.send_message.call_args[1]
         assert call_kwargs["MessageGroupId"] == "group-1"
         assert call_kwargs["MessageDeduplicationId"] == "dedup-1"
+
+    @patch("azure_functions_sqs.client.boto3")
+    def test_send_message_fifo_requires_message_group_id(self, mock_boto3: MagicMock) -> None:
+        """Test that sending to FIFO queue without message_group_id raises ValueError."""
+        mock_client = MagicMock()
+        mock_boto3.client.return_value = mock_client
+
+        client = SqsClient(
+            queue_url="https://sqs.us-east-1.amazonaws.com/123/test-queue.fifo"
+        )
+
+        with pytest.raises(ValueError, match="message_group_id is required for FIFO queues"):
+            client.send_message(body="FIFO message without group ID")
+
+    @patch("azure_functions_sqs.client.boto3")
+    def test_receive_messages_invalid_max(self, mock_boto3: MagicMock) -> None:
+        """Test that invalid max_number_of_messages raises ValueError."""
+        mock_client = MagicMock()
+        mock_boto3.client.return_value = mock_client
+
+        client = SqsClient(
+            queue_url="https://sqs.us-east-1.amazonaws.com/123/test-queue"
+        )
+
+        with pytest.raises(ValueError, match="max_number_of_messages must be between 1 and 10"):
+            client.receive_messages(max_number_of_messages=15)
+
+    @patch("azure_functions_sqs.client.boto3")
+    def test_receive_messages_invalid_wait_time(self, mock_boto3: MagicMock) -> None:
+        """Test that invalid wait_time_seconds raises ValueError."""
+        mock_client = MagicMock()
+        mock_boto3.client.return_value = mock_client
+
+        client = SqsClient(
+            queue_url="https://sqs.us-east-1.amazonaws.com/123/test-queue"
+        )
+
+        with pytest.raises(ValueError, match="wait_time_seconds must be between 0 and 20"):
+            client.receive_messages(wait_time_seconds=25)
+
+    @patch("azure_functions_sqs.client.boto3")
+    def test_send_message_invalid_delay(self, mock_boto3: MagicMock) -> None:
+        """Test that invalid delay_seconds raises ValueError."""
+        mock_client = MagicMock()
+        mock_boto3.client.return_value = mock_client
+
+        client = SqsClient(
+            queue_url="https://sqs.us-east-1.amazonaws.com/123/test-queue"
+        )
+
+        with pytest.raises(ValueError, match="delay_seconds must be between 0 and 900"):
+            client.send_message(body="Test", delay_seconds=1000)

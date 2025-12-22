@@ -3,6 +3,8 @@
 import json
 from unittest.mock import MagicMock, patch
 
+import pytest
+
 from azure_functions_sqs.output import SqsCollector, SqsOutput, SqsOutputOptions
 
 
@@ -16,6 +18,16 @@ class TestSqsOutputOptions:
         assert options.delay_seconds == 0
         assert options.message_group_id is None
         assert options.use_content_based_deduplication is False
+
+    def test_invalid_delay_seconds_negative(self) -> None:
+        """Test that negative delay_seconds raises ValueError."""
+        with pytest.raises(ValueError, match="delay_seconds must be between 0 and 900"):
+            SqsOutputOptions(delay_seconds=-1)
+
+    def test_invalid_delay_seconds_too_high(self) -> None:
+        """Test that delay_seconds above 900 raises ValueError."""
+        with pytest.raises(ValueError, match="delay_seconds must be between 0 and 900"):
+            SqsOutputOptions(delay_seconds=901)
 
 
 class TestSqsOutput:
