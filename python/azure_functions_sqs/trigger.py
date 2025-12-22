@@ -45,6 +45,14 @@ class SqsTriggerOptions:
             raise ValueError(
                 f"max_number_of_messages must be between 1 and 10, got {self.max_number_of_messages}"
             )
+        if self.visibility_timeout.total_seconds() < 0:
+            raise ValueError(
+                f"visibility_timeout must be non-negative, got {self.visibility_timeout}"
+            )
+        if self.polling_interval.total_seconds() < 0:
+            raise ValueError(
+                f"polling_interval must be non-negative, got {self.polling_interval}"
+            )
 
 
 class SqsTrigger:
@@ -191,6 +199,9 @@ class SqsTrigger:
 
     async def _process_messages_async(self, messages: list[SqsMessage]) -> None:
         """Process a batch of messages."""
+        if self._handler is None:
+            raise RuntimeError("Handler not registered")
+
         client = self._get_client()
 
         for message in messages:

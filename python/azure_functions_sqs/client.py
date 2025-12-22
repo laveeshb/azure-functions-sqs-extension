@@ -146,7 +146,23 @@ class SqsClient:
             
         Returns:
             List of SqsMessage objects.
+            
+        Raises:
+            ValueError: If parameters are out of valid range.
         """
+        if not 1 <= max_number_of_messages <= 10:
+            raise ValueError(
+                f"max_number_of_messages must be between 1 and 10, got {max_number_of_messages}"
+            )
+        if not 0 <= wait_time_seconds <= 20:
+            raise ValueError(
+                f"wait_time_seconds must be between 0 and 20, got {wait_time_seconds}"
+            )
+        if visibility_timeout < 0:
+            raise ValueError(
+                f"visibility_timeout must be non-negative, got {visibility_timeout}"
+            )
+
         response = self._client.receive_message(
             QueueUrl=self.queue_url,
             MaxNumberOfMessages=max_number_of_messages,
@@ -192,7 +208,21 @@ class SqsClient:
             
         Returns:
             The MessageId of the sent message.
+            
+        Raises:
+            ValueError: If delay_seconds is out of valid range or FIFO queue missing message_group_id.
         """
+        if not 0 <= delay_seconds <= 900:
+            raise ValueError(
+                f"delay_seconds must be between 0 and 900, got {delay_seconds}"
+            )
+
+        # Check if FIFO queue (ends with .fifo)
+        if self.queue_url.endswith(".fifo") and not message_group_id:
+            raise ValueError(
+                "message_group_id is required for FIFO queues"
+            )
+
         kwargs: dict[str, Any] = {
             "QueueUrl": self.queue_url,
             "MessageBody": body,
