@@ -1,5 +1,6 @@
 """SQS Message model - matches .NET Amazon.SQS.Model.Message contract."""
 
+import base64
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -28,7 +29,6 @@ class MessageAttributeValue:
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for JSON serialization."""
-        import base64
         result: dict[str, Any] = {"DataType": self.data_type}
         if self.string_value is not None:
             result["StringValue"] = self.string_value

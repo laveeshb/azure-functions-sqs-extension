@@ -14,6 +14,7 @@ logger = logging.getLogger(__name__)
 # Constants for timeouts and polling
 DEFAULT_LONG_POLLING_SECONDS = 20
 DEFAULT_SHUTDOWN_TIMEOUT_SECONDS = 30.0
+ERROR_RETRY_DELAY_SECONDS = 5
 
 
 @dataclass
@@ -172,11 +173,12 @@ class SqsTrigger:
                 break
             except Exception as ex:
                 logger.error(
-                    "Error in polling loop for queue %s: %s. Retrying in 5 seconds.",
+                    "Error in polling loop for queue %s: %s. Retrying in %d seconds.",
                     self.queue_url,
                     ex,
+                    ERROR_RETRY_DELAY_SECONDS,
                 )
-                await asyncio.sleep(5)
+                await asyncio.sleep(ERROR_RETRY_DELAY_SECONDS)
 
         logger.debug("Polling loop exited for queue: %s", self.queue_url)
 

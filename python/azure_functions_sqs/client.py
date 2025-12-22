@@ -82,12 +82,30 @@ class SqsClient:
         # Match %VAR_NAME% pattern (Azure Functions style)
         match = re.match(r"^%(.+)%$", value)
         if match:
-            return os.environ.get(match.group(1), value)
+            env_name = match.group(1)
+            if env_name in os.environ:
+                return os.environ[env_name]
+            logger.warning(
+                "Environment variable '%s' referenced in configuration but not set; "
+                "using literal value '%s'.",
+                env_name,
+                value,
+            )
+            return value
 
         # Match ${VAR_NAME} pattern (shell style)
         match = re.match(r"^\$\{(.+)\}$", value)
         if match:
-            return os.environ.get(match.group(1), value)
+            env_name = match.group(1)
+            if env_name in os.environ:
+                return os.environ[env_name]
+            logger.warning(
+                "Environment variable '%s' referenced in configuration but not set; "
+                "using literal value '%s'.",
+                env_name,
+                value,
+            )
+            return value
 
         return value
 
