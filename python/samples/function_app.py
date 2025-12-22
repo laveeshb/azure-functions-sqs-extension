@@ -56,9 +56,13 @@ def process_sqs_message(message: SqsMessage) -> None:
         for name, attr in message.message_attributes.items():
             logging.info(f"Attribute {name}: {attr.string_value}")
     
-    # Process the message...
-    data = json.loads(message.body)
-    logging.info(f"Processed order: {data.get('order_id')}")
+    # Process the message with error handling
+    try:
+        data = json.loads(message.body)
+        logging.info(f"Processed order: {data.get('order_id')}")
+    except json.JSONDecodeError as e:
+        logging.error(f"Failed to parse message body as JSON: {e}")
+        raise
 
 
 # =============================================================================
@@ -84,6 +88,8 @@ def send_to_sqs(req: func.HttpRequest) -> str:
     configured in the @output decorator.
     """
     body = req.get_json()
+    if body is None:
+        return json.dumps({"error": "Request body must be valid JSON"})
     
     # The return value becomes the SQS message body
     return json.dumps({
@@ -114,12 +120,19 @@ def batch_send_to_sqs(req: func.HttpRequest) -> func.HttpResponse:
     )
     
     body = req.get_json()
+    if body is None:
+        return func.HttpResponse(
+            json.dumps({"error": "Request body must be valid JSON"}),
+            mimetype="application/json",
+            status_code=400,
+        )
+    
     items = body.get("items", [])
     
     # Add multiple messages
     for item in items:
         collector.add({
-            "item_id": item["id"],
+            "item_id": item.get("id"),
             "action": item.get("action", "process"),
         })
     
@@ -153,6 +166,8 @@ def send_to_fifo_queue(req: func.HttpRequest) -> str:
     Send ordered messages to a FIFO queue.
     """
     body = req.get_json()
+    if body is None:
+        return json.dumps({"error": "Request body must be valid JSON"})
     return json.dumps(body)
 
 

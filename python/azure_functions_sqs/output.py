@@ -31,6 +31,13 @@ class SqsOutputOptions:
     use_content_based_deduplication: bool = False
     """If True, uses content-based deduplication (FIFO queues only)."""
 
+    def __post_init__(self) -> None:
+        """Validate options after initialization."""
+        if not 0 <= self.delay_seconds <= 900:
+            raise ValueError(
+                f"delay_seconds must be between 0 and 900, got {self.delay_seconds}"
+            )
+
 
 class SqsOutput:
     """

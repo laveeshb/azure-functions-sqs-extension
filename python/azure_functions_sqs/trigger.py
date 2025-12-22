@@ -39,6 +39,13 @@ class SqsTriggerOptions:
     Default: 5s.
     """
 
+    def __post_init__(self) -> None:
+        """Validate options after initialization."""
+        if not 1 <= self.max_number_of_messages <= 10:
+            raise ValueError(
+                f"max_number_of_messages must be between 1 and 10, got {self.max_number_of_messages}"
+            )
+
 
 class SqsTrigger:
     """
