@@ -2,17 +2,6 @@
 
 A Python package that enables Azure Functions to integrate with Amazon SQS (Simple Queue Service) for both trigger-based and output binding scenarios.
 
-## 📁 Repository Structure
-
-```
-python/
-├── azure_functions_sqs/   # Source code for the package
-├── tests/                 # Unit tests
-├── samples/               # Sample function app
-├── pyproject.toml         # Package configuration
-└── README.md              # This documentation
-```
-
 ## Installation
 
 ```bash
