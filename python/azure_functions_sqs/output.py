@@ -1,0 +1,252 @@
+"""SQS Output binding - sends messages to SQS queue."""
+
+from __future__ import annotations
+
+import functools
+import json
+import logging
+from dataclasses import dataclass
+from typing import Any, Callable, TypeVar
+
+from azure_functions_sqs.client import SqsClient
+
+logger = logging.getLogger(__name__)
+
+T = TypeVar("T")
+
+
+@dataclass
+class SqsOutputOptions:
+    """
+    SQS Output binding configuration options.
+
+    Matches .NET SqsQueueOutAttribute properties.
+    """
+
+    delay_seconds: int = 0
+    """Delay before message becomes visible (0-900 seconds). Default: 0."""
+
+    message_group_id: str | None = None
+    """Message group ID for FIFO queues. Required for FIFO queues."""
+
+    def __post_init__(self) -> None:
+        """Validate options after initialization."""
+        if not 0 <= self.delay_seconds <= 900:
+            raise ValueError(
+                f"delay_seconds must be between 0 and 900, got {self.delay_seconds}"
+            )
+
+
+class SqsOutput:
+    """
+    SQS Output binding for Azure Functions.
+
+    Sends the function's return value to an SQS queue.
+    Matches the .NET SqsQueueOutAttribute contract.
+
+    Example:
+        @app.route(route="send-message")
+        @SqsOutput(
+            queue_url="%SQS_OUTPUT_QUEUE_URL%",
+            region="%AWS_REGION%"
+        )
+        def send_message(req: func.HttpRequest) -> str:
+            return f"Message from request: {req.params.get('msg')}"
+    """
+
+    def __init__(
+        self,
+        queue_url: str,
+        region: str | None = None,
+        aws_key_id: str | None = None,
+        aws_access_key: str | None = None,
+        options: SqsOutputOptions | None = None,
+    ) -> None:
+        """
+        Initialize SQS Output binding.
+
+        Args:
+            queue_url: SQS Queue URL (required). Supports %ENV_VAR% syntax.
+            region: AWS Region override. If not provided, extracted from queue_url.
+            aws_key_id: AWS Access Key ID. Optional - uses credential chain if not provided.
+            aws_access_key: AWS Secret Access Key. Optional - uses credential chain if not provided.
+            options: Output binding options (delay, FIFO settings, etc.).
+        """
+        self.queue_url = queue_url
+        self.region = region
+        self.aws_key_id = aws_key_id
+        self.aws_access_key = aws_access_key
+        self.options = options or SqsOutputOptions()
+
+        self._client: SqsClient | None = None
+
+    def __call__(self, func: Callable[..., T]) -> Callable[..., T]:
+        """Decorator to wrap the function and send return value to SQS."""
+
+        @functools.wraps(func)
+        def wrapper(*args: Any, **kwargs: Any) -> T:
+            result = func(*args, **kwargs)
+            self._send_message(result)
+            return result
+
+        return wrapper
+
+    def _get_client(self) -> SqsClient:
+        """Get or create the SQS client."""
+        if self._client is None:
+            self._client = SqsClient(
+                queue_url=self.queue_url,
+                region=self.region,
+                aws_access_key_id=self.aws_key_id,
+                aws_secret_access_key=self.aws_access_key,
+            )
+        return self._client
+
+    def _send_message(self, value: Any) -> None:
+        """
+        Send a message to the SQS queue.
+
+        Args:
+            value: The value to send. Will be JSON serialized if not a string.
+        """
+        if value is None:
+            logger.debug("Skipping SQS output - return value is None")
+            return
+
+        client = self._get_client()
+
+        # Convert to string
+        if isinstance(value, str):
+            body = value
+        elif isinstance(value, (dict, list)):
+            try:
+                body = json.dumps(value)
+            except (TypeError, ValueError) as exc:
+                logger.error(
+                    "Failed to JSON serialize message of type %s: %s",
+                    type(value).__name__,
+                    exc,
+                )
+                raise TypeError(
+                    f"Message is not JSON serializable. Type: {type(value).__name__}. "
+                    f"Ensure dicts/lists only contain JSON-serializable types."
+                ) from exc
+        else:
+            body = str(value)
+
+        message_id = client.send_message(
+            body=body,
+            delay_seconds=self.options.delay_seconds,
+            message_group_id=self.options.message_group_id,
+        )
+
+        logger.debug("Sent message to SQS queue %s with ID: %s", self.queue_url, message_id)
+
+
+class SqsCollector:
+    """
+    Collector for sending multiple messages to SQS.
+
+    Matches the .NET IAsyncCollector<T> pattern.
+
+    Example:
+        @app.route(route="send-batch")
+        def send_batch(req: func.HttpRequest, collector: SqsCollector):
+            collector.add("Message 1")
+            collector.add("Message 2")
+            collector.add({"key": "value"})
+            # Messages are sent when collector.flush() is called or context exits
+    """
+
+    def __init__(
+        self,
+        queue_url: str,
+        region: str | None = None,
+        aws_key_id: str | None = None,
+        aws_access_key: str | None = None,
+        options: SqsOutputOptions | None = None,
+    ) -> None:
+        """Initialize the collector."""
+        self.queue_url = queue_url
+        self.region = region
+        self.aws_key_id = aws_key_id
+        self.aws_access_key = aws_access_key
+        self.options = options or SqsOutputOptions()
+        self._messages: list[str] = []
+        self._client: SqsClient | None = None
+
+    def _get_client(self) -> SqsClient:
+        """Get or create the SQS client."""
+        if self._client is None:
+            self._client = SqsClient(
+                queue_url=self.queue_url,
+                region=self.region,
+                aws_access_key_id=self.aws_key_id,
+                aws_secret_access_key=self.aws_access_key,
+            )
+        return self._client
+
+    def add(self, message: Any) -> None:
+        """
+        Add a message to the collector.
+
+        Args:
+            message: Message to add. Will be JSON serialized if not a string.
+        """
+        if isinstance(message, str):
+            self._messages.append(message)
+        elif isinstance(message, (dict, list)):
+            try:
+                self._messages.append(json.dumps(message))
+            except (TypeError, ValueError) as exc:
+                logger.error(
+                    "Failed to JSON serialize message of type %s: %r",
+                    type(message).__name__,
+                    message,
+                )
+                raise TypeError(
+                    "Message added to SqsCollector is not JSON serializable. "
+                    "Ensure that dicts/lists only contain JSON-serializable "
+                    "types such as str, int, float, bool, None, or nested dicts/lists."
+                ) from exc
+        else:
+            self._messages.append(str(message))
+
+    def flush(self) -> int:
+        """
+        Send all collected messages to SQS in batches.
+
+        Returns:
+            Number of messages sent successfully.
+        """
+        if not self._messages:
+            return 0
+
+        client = self._get_client()
+        sent_count = 0
+
+        # SQS batch limit is 10 messages
+        for i in range(0, len(self._messages), 10):
+            batch = self._messages[i : i + 10]
+            entries: list[dict[str, Any]] = []
+            for idx, msg in enumerate(batch):
+                entry: dict[str, Any] = {"Id": str(idx), "MessageBody": msg}
+                # Add FIFO queue parameters if message_group_id is set
+                if self.options.message_group_id:
+                    entry["MessageGroupId"] = self.options.message_group_id
+                entries.append(entry)
+
+            response = client.send_message_batch(entries)
+            sent_count += len(response.get("Successful", []))
+
+            if response.get("Failed"):
+                for failed in response["Failed"]:
+                    logger.error(
+                        "Failed to send message %s: %s",
+                        failed["Id"],
+                        failed.get("Message", "Unknown error"),
+                    )
+
+        self._messages.clear()
+        logger.debug("Flushed %d messages to SQS queue: %s", sent_count, self.queue_url)
+        return sent_count

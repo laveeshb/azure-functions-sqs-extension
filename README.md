@@ -1,8 +1,7 @@
 # ⚡ Azure Functions - Amazon SQS Extension
 
-![6.0 | 8.0](https://img.shields.io/badge/6.0%20|%208.0-512BD4?logo=dotnet&logoColor=white)
-[![NuGet - In-Process](https://img.shields.io/nuget/v/Extensions.Azure.WebJobs.SQS.svg?label=Extensions.Azure.WebJobs.SQS)](https://www.nuget.org/packages/Extensions.Azure.WebJobs.SQS)
-[![NuGet - Isolated Worker](https://img.shields.io/nuget/v/Extensions.Azure.Functions.Worker.SQS.svg?label=Extensions.Azure.Functions.Worker.SQS)](https://www.nuget.org/packages/Extensions.Azure.Functions.Worker.SQS)
+![.NET 6.0 | 8.0](https://img.shields.io/badge/.NET%206.0%20|%208.0-512BD4?logo=dotnet&logoColor=white) [![NuGet - In-Process](https://img.shields.io/nuget/v/Extensions.Azure.WebJobs.SQS.svg?label=NuGet%20In-Process)](https://www.nuget.org/packages/Extensions.Azure.WebJobs.SQS) [![NuGet - Isolated Worker](https://img.shields.io/nuget/v/Extensions.Azure.Functions.Worker.SQS.svg?label=NuGet%20Isolated)](https://www.nuget.org/packages/Extensions.Azure.Functions.Worker.SQS)  
+![Python 3.9+](https://img.shields.io/badge/Python%203.9+-3776AB?logo=python&logoColor=white) [![PyPI](https://img.shields.io/pypi/v/azure-functions-sqs.svg?label=PyPI)](https://pypi.org/project/azure-functions-sqs/)
 
 Multi-language [Azure Functions](https://learn.microsoft.com/azure/azure-functions/) bindings for Amazon Simple Queue Service (SQS). 🔗
 
@@ -15,7 +14,7 @@ This repository provides Azure Functions extensions to integrate with [Amazon SQ
 | Language | Status | Documentation |
 |----------|--------|---------------|
 | **.NET** | ✅ Available | [Documentation](./dotnet/README.md) |
-| **Python** | 🚧 Coming soon | - |
+| **Python** | ✅ Available | [Documentation](./python/README.md) |
 | **Java** | 🚧 Coming soon | - |
 | **JavaScript/TypeScript** | 🚧 Coming soon | - |
 
@@ -36,6 +35,23 @@ For .NET developers, this extension provides two packages supporting both hostin
 
 📖 **[See full .NET documentation](./dotnet/README.md)**
 🧪 **[LocalStack testing guide](./dotnet/localstack/README.md)**
+
+## 🐍 Python Extension
+
+For Python developers, install the native package:
+
+```bash
+pip install azure-functions-sqs
+```
+
+**Features:**
+- ⚡ `SqsTrigger` - Poll SQS queues with automatic message deletion
+- 📤 `SqsOutput` - Send messages via function return values
+- 📦 `SqsCollector` - Batch send multiple messages efficiently
+- 🔐 AWS credential chain support (environment variables, IAM roles)
+- 🐳 LocalStack support for local development
+
+📖 **[See full Python documentation](./python/README.md)**
 
 ## 📜 History & Attribution
 

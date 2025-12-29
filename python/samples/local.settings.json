@@ -1,0 +1,15 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "FUNCTIONS_WORKER_RUNTIME": "python",
+    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+    
+    "AWS_REGION": "us-east-1",
+    "AWS_ACCESS_KEY_ID": "<your-access-key-id>",
+    "AWS_SECRET_ACCESS_KEY": "<your-secret-access-key>",
+    
+    "SQS_QUEUE_URL": "https://sqs.us-east-1.amazonaws.com/123456789012/my-input-queue",
+    "OUTPUT_QUEUE_URL": "https://sqs.us-east-1.amazonaws.com/123456789012/my-output-queue",
+    "FIFO_QUEUE_URL": "https://sqs.us-east-1.amazonaws.com/123456789012/my-fifo-queue.fifo"
+  }
+}
