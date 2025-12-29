@@ -138,8 +138,8 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        tag_name: v${{ inputs.version }}
-        name: Release v${{ inputs.version }}
+        tag_name: dotnet-v${{ inputs.version }}
+        name: .NET v${{ inputs.version }}
         body_path: release-notes.md
         draft: false
         prerelease: ${{ contains(inputs.version, '-') }}
@@ -167,5 +167,5 @@ jobs:
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "### Next Steps" >> $GITHUB_STEP_SUMMARY
         echo "1. Verify packages on [NuGet.org](https://www.nuget.org/profiles/laveeshb)" >> $GITHUB_STEP_SUMMARY
-        echo "2. GitHub release created: [v${{ inputs.version }}](https://github.com/laveeshb/azure-functions-sqs-extension/releases/tag/v${{ inputs.version }})" >> $GITHUB_STEP_SUMMARY
+        echo "2. GitHub release created: [dotnet-v${{ inputs.version }}](https://github.com/laveeshb/azure-functions-sqs-extension/releases/tag/dotnet-v${{ inputs.version }})" >> $GITHUB_STEP_SUMMARY
         echo "3. Update documentation if needed" >> $GITHUB_STEP_SUMMARY

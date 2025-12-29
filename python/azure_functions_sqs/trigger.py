@@ -1,5 +1,7 @@
 """SQS Trigger - polls SQS queue and invokes Azure Function."""
 
+from __future__ import annotations
+
 import asyncio
 import logging
 from dataclasses import dataclass, field
@@ -21,7 +23,7 @@ ERROR_RETRY_DELAY_SECONDS = 5
 class SqsTriggerOptions:
     """
     SQS Trigger configuration options - matches .NET SqsQueueOptions.
-    
+
     These can be set globally in host.json or per-function.
     """
 
@@ -43,7 +45,8 @@ class SqsTriggerOptions:
         """Validate options after initialization."""
         if not 1 <= self.max_number_of_messages <= 10:
             raise ValueError(
-                f"max_number_of_messages must be between 1 and 10, got {self.max_number_of_messages}"
+                f"max_number_of_messages must be between 1 and 10, "
+                f"got {self.max_number_of_messages}"
             )
         if self.visibility_timeout.total_seconds() < 0:
             raise ValueError(
@@ -58,10 +61,10 @@ class SqsTriggerOptions:
 class SqsTrigger:
     """
     SQS Trigger binding for Azure Functions.
-    
+
     Polls an SQS queue and invokes the decorated function for each message.
     Matches the .NET SqsQueueTriggerAttribute contract.
-    
+
     Example:
         @app.function_name("ProcessSqsMessage")
         @SqsTrigger(
@@ -82,7 +85,7 @@ class SqsTrigger:
     ) -> None:
         """
         Initialize SQS Trigger.
-        
+
         Args:
             queue_url: SQS Queue URL (required). Supports %ENV_VAR% syntax.
             region: AWS Region override. If not provided, extracted from queue_url.
@@ -156,7 +159,7 @@ class SqsTrigger:
     async def _poll_loop_async(self) -> None:
         """
         Main polling loop.
-        
+
         Uses sequential polling to prevent overlapping requests
         (same fix as .NET Issue #12).
         """

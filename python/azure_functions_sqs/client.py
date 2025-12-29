@@ -1,5 +1,7 @@
 """SQS Client wrapper using boto3."""
 
+from __future__ import annotations
+
 import logging
 import os
 import re
@@ -16,7 +18,7 @@ logger = logging.getLogger(__name__)
 class SqsClient:
     """
     AWS SQS Client wrapper using boto3.
-    
+
     Provides methods for receiving, sending, and deleting SQS messages.
     Uses the AWS credential chain by default (environment variables, IAM roles, etc.)
     """
@@ -30,16 +32,19 @@ class SqsClient:
     ) -> None:
         """
         Initialize SQS client.
-        
+
         Args:
             queue_url: The SQS queue URL (required).
             region: AWS region override. If not provided, extracted from queue_url.
             aws_access_key_id: Optional AWS access key. Uses credential chain if not provided.
             aws_secret_access_key: Optional AWS secret key. Uses credential chain if not provided.
         """
-        self.queue_url = self._resolve_env_var(queue_url)
+        resolved_url = self._resolve_env_var(queue_url)
+        if resolved_url is None:
+            raise ValueError("queue_url is required")
+        self.queue_url: str = resolved_url
         self.region = self._resolve_env_var(region) or self._extract_region_from_url(self.queue_url)
-        
+
         # Resolve credentials from environment variable references
         access_key = self._resolve_env_var(aws_access_key_id)
         secret_key = self._resolve_env_var(aws_secret_access_key)
@@ -73,7 +78,7 @@ class SqsClient:
     def _resolve_env_var(value: str | None) -> str | None:
         """
         Resolve environment variable references like %VAR_NAME% or ${VAR_NAME}.
-        
+
         Matches .NET [AutoResolve] behavior.
         """
         if value is None:
@@ -113,9 +118,9 @@ class SqsClient:
     def _extract_region_from_url(queue_url: str) -> str:
         """
         Extract AWS region from SQS queue URL.
-        
+
         URL format: https://sqs.{region}.amazonaws.com/{account-id}/{queue-name}
-        
+
         Raises:
             ValueError: If region cannot be extracted from URL.
         """
@@ -138,15 +143,15 @@ class SqsClient:
     ) -> list[SqsMessage]:
         """
         Receive messages from the SQS queue.
-        
+
         Args:
             max_number_of_messages: Maximum messages to receive (1-10). Default: 10.
             visibility_timeout: Seconds messages are hidden after receive. Default: 30.
             wait_time_seconds: Long polling wait time (0-20). Default: 20.
-            
+
         Returns:
             List of SqsMessage objects.
-            
+
         Raises:
             ValueError: If parameters are out of valid range.
         """
@@ -178,7 +183,7 @@ class SqsClient:
     def delete_message(self, receipt_handle: str) -> None:
         """
         Delete a message from the queue.
-        
+
         Args:
             receipt_handle: The receipt handle from the received message.
         """
@@ -198,19 +203,20 @@ class SqsClient:
     ) -> str:
         """
         Send a message to the queue.
-        
+
         Args:
             body: The message body.
             delay_seconds: Delay before message becomes visible (0-900). Default: 0.
             message_attributes: Optional message attributes.
             message_group_id: Required for FIFO queues.
             message_deduplication_id: Optional for FIFO queues with content-based dedup.
-            
+
         Returns:
             The MessageId of the sent message.
-            
+
         Raises:
-            ValueError: If delay_seconds is out of valid range or FIFO queue missing message_group_id.
+            ValueError: If delay_seconds is out of valid range or
+                FIFO queue missing message_group_id.
         """
         if not 0 <= delay_seconds <= 900:
             raise ValueError(
@@ -239,7 +245,7 @@ class SqsClient:
             kwargs["MessageDeduplicationId"] = message_deduplication_id
 
         response = self._client.send_message(**kwargs)
-        message_id = response["MessageId"]
+        message_id: str = response["MessageId"]
         logger.debug("Sent message with ID: %s", message_id)
         return message_id
 
@@ -249,13 +255,13 @@ class SqsClient:
     ) -> dict[str, Any]:
         """
         Send multiple messages to the queue in a batch.
-        
+
         Args:
             messages: List of message entries. Each entry should have:
                 - Id: Unique identifier for the message in this batch
                 - MessageBody: The message body
                 - Optional: DelaySeconds, MessageAttributes, MessageGroupId, etc.
-                
+
         Returns:
             Response containing Successful and Failed message results.
         """
@@ -263,4 +269,4 @@ class SqsClient:
             QueueUrl=self.queue_url,
             Entries=messages,
         )
-        return response
+        return dict(response)

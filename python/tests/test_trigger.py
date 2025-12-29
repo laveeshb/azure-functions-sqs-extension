@@ -176,7 +176,7 @@ class TestSqsTriggerPollingBehavior:
     async def test_sequential_polling_no_overlap(self) -> None:
         """
         Test that polling is sequential (no overlapping polls).
-        
+
         This validates the fix for Issue #12 - the timer-based polling
         was replaced with a sequential loop.
         """
@@ -209,10 +209,12 @@ class TestSqsTriggerPollingBehavior:
 
             return []
 
-        with patch("azure_functions_sqs.trigger.asyncio.to_thread", side_effect=mock_receive):
-            with patch.object(trigger, "_get_client"):
-                trigger._running = True
-                await trigger._poll_loop_async()
+        with (
+            patch("azure_functions_sqs.trigger.asyncio.to_thread", side_effect=mock_receive),
+            patch.object(trigger, "_get_client"),
+        ):
+            trigger._running = True
+            await trigger._poll_loop_async()
 
         # Should never have more than 1 concurrent poll
         assert max_concurrent_polls == 1, "Polls should be sequential, not concurrent"
@@ -252,11 +254,13 @@ class TestSqsTriggerPollingBehavior:
                 )
             ]
 
-        with patch("azure_functions_sqs.trigger.asyncio.to_thread", side_effect=mock_receive):
-            with patch.object(trigger, "_get_client") as mock_get_client:
-                mock_get_client.return_value.delete_message = MagicMock()
-                trigger._running = True
-                await trigger._poll_loop_async()
+        with (
+            patch("azure_functions_sqs.trigger.asyncio.to_thread", side_effect=mock_receive),
+            patch.object(trigger, "_get_client") as mock_get_client,
+        ):
+            mock_get_client.return_value.delete_message = MagicMock()
+            trigger._running = True
+            await trigger._poll_loop_async()
 
         # Check that polls happened quickly (no 10s delay between them)
         for i in range(1, len(poll_times)):

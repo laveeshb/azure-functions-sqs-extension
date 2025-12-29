@@ -1,5 +1,7 @@
 """SQS Message model - matches .NET Amazon.SQS.Model.Message contract."""
 
+from __future__ import annotations
+
 import base64
 from dataclasses import dataclass, field
 from typing import Any
@@ -19,7 +21,7 @@ class MessageAttributeValue:
     """Binary value when data_type is Binary."""
 
     @classmethod
-    def from_boto3(cls, attr: dict[str, Any]) -> "MessageAttributeValue":
+    def from_boto3(cls, attr: dict[str, Any]) -> MessageAttributeValue:
         """Create from boto3 message attribute dict."""
         return cls(
             data_type=attr.get("DataType", "String"),
@@ -42,7 +44,7 @@ class MessageAttributeValue:
 class SqsMessage:
     """
     SQS Message - matches .NET Amazon.SQS.Model.Message contract.
-    
+
     This class mirrors the structure of the .NET SDK's Message class
     to ensure consistent behavior across language implementations.
     """
@@ -62,7 +64,7 @@ class SqsMessage:
     attributes: dict[str, str] = field(default_factory=dict)
     """
     System attributes of the message.
-    
+
     Common attributes:
     - SentTimestamp: When the message was sent (epoch milliseconds)
     - ApproximateReceiveCount: Number of times the message has been received
@@ -77,13 +79,13 @@ class SqsMessage:
     """Custom attributes set by the message sender."""
 
     @classmethod
-    def from_boto3(cls, msg: dict[str, Any]) -> "SqsMessage":
+    def from_boto3(cls, msg: dict[str, Any]) -> SqsMessage:
         """
         Create SqsMessage from boto3 receive_message response.
-        
+
         Args:
             msg: A message dict from boto3 SQS receive_message response.
-            
+
         Returns:
             SqsMessage instance with all fields populated.
         """
@@ -103,7 +105,7 @@ class SqsMessage:
     def to_dict(self) -> dict[str, Any]:
         """
         Convert to dictionary for JSON serialization.
-        
+
         Returns:
             Dictionary matching the .NET Message JSON structure.
         """

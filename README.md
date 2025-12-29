@@ -1,8 +1,10 @@
 # ⚡ Azure Functions - Amazon SQS Extension
 
-![6.0 | 8.0](https://img.shields.io/badge/6.0%20|%208.0-512BD4?logo=dotnet&logoColor=white)
-[![NuGet - In-Process](https://img.shields.io/nuget/v/Extensions.Azure.WebJobs.SQS.svg?label=Extensions.Azure.WebJobs.SQS)](https://www.nuget.org/packages/Extensions.Azure.WebJobs.SQS)
-[![NuGet - Isolated Worker](https://img.shields.io/nuget/v/Extensions.Azure.Functions.Worker.SQS.svg?label=Extensions.Azure.Functions.Worker.SQS)](https://www.nuget.org/packages/Extensions.Azure.Functions.Worker.SQS)
+![.NET 6.0 | 8.0](https://img.shields.io/badge/.NET%206.0%20|%208.0-512BD4?logo=dotnet&logoColor=white)
+![Python 3.9+](https://img.shields.io/badge/Python%203.9+-3776AB?logo=python&logoColor=white)
+[![NuGet - In-Process](https://img.shields.io/nuget/v/Extensions.Azure.WebJobs.SQS.svg?label=NuGet%20In-Process)](https://www.nuget.org/packages/Extensions.Azure.WebJobs.SQS)
+[![NuGet - Isolated Worker](https://img.shields.io/nuget/v/Extensions.Azure.Functions.Worker.SQS.svg?label=NuGet%20Isolated)](https://www.nuget.org/packages/Extensions.Azure.Functions.Worker.SQS)
+[![PyPI](https://img.shields.io/pypi/v/azure-functions-sqs.svg?label=PyPI)](https://pypi.org/project/azure-functions-sqs/)
 
 Multi-language [Azure Functions](https://learn.microsoft.com/azure/azure-functions/) bindings for Amazon Simple Queue Service (SQS). 🔗
 

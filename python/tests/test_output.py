@@ -17,7 +17,6 @@ class TestSqsOutputOptions:
 
         assert options.delay_seconds == 0
         assert options.message_group_id is None
-        assert options.use_content_based_deduplication is False
 
     def test_invalid_delay_seconds_negative(self) -> None:
         """Test that negative delay_seconds raises ValueError."""

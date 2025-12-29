@@ -1,5 +1,7 @@
 """SQS Output binding - sends messages to SQS queue."""
 
+from __future__ import annotations
+
 import functools
 import json
 import logging
@@ -17,19 +19,15 @@ T = TypeVar("T")
 class SqsOutputOptions:
     """
     SQS Output binding configuration options.
-    
+
     Matches .NET SqsQueueOutAttribute properties.
     """
 
     delay_seconds: int = 0
     """Delay before message becomes visible (0-900 seconds). Default: 0."""
 
-    # FIFO queue options
     message_group_id: str | None = None
     """Message group ID for FIFO queues. Required for FIFO queues."""
-
-    use_content_based_deduplication: bool = False
-    """If True, uses content-based deduplication (FIFO queues only)."""
 
     def __post_init__(self) -> None:
         """Validate options after initialization."""
@@ -42,10 +40,10 @@ class SqsOutputOptions:
 class SqsOutput:
     """
     SQS Output binding for Azure Functions.
-    
+
     Sends the function's return value to an SQS queue.
     Matches the .NET SqsQueueOutAttribute contract.
-    
+
     Example:
         @app.route(route="send-message")
         @SqsOutput(
@@ -66,7 +64,7 @@ class SqsOutput:
     ) -> None:
         """
         Initialize SQS Output binding.
-        
+
         Args:
             queue_url: SQS Queue URL (required). Supports %ENV_VAR% syntax.
             region: AWS Region override. If not provided, extracted from queue_url.
@@ -107,7 +105,7 @@ class SqsOutput:
     def _send_message(self, value: Any) -> None:
         """
         Send a message to the SQS queue.
-        
+
         Args:
             value: The value to send. Will be JSON serialized if not a string.
         """
@@ -148,9 +146,9 @@ class SqsOutput:
 class SqsCollector:
     """
     Collector for sending multiple messages to SQS.
-    
+
     Matches the .NET IAsyncCollector<T> pattern.
-    
+
     Example:
         @app.route(route="send-batch")
         def send_batch(req: func.HttpRequest, collector: SqsCollector):
@@ -166,12 +164,14 @@ class SqsCollector:
         region: str | None = None,
         aws_key_id: str | None = None,
         aws_access_key: str | None = None,
+        options: SqsOutputOptions | None = None,
     ) -> None:
         """Initialize the collector."""
         self.queue_url = queue_url
         self.region = region
         self.aws_key_id = aws_key_id
         self.aws_access_key = aws_access_key
+        self.options = options or SqsOutputOptions()
         self._messages: list[str] = []
         self._client: SqsClient | None = None
 
@@ -189,7 +189,7 @@ class SqsCollector:
     def add(self, message: Any) -> None:
         """
         Add a message to the collector.
-        
+
         Args:
             message: Message to add. Will be JSON serialized if not a string.
         """
@@ -215,7 +215,7 @@ class SqsCollector:
     def flush(self) -> int:
         """
         Send all collected messages to SQS in batches.
-        
+
         Returns:
             Number of messages sent successfully.
         """
@@ -228,9 +228,13 @@ class SqsCollector:
         # SQS batch limit is 10 messages
         for i in range(0, len(self._messages), 10):
             batch = self._messages[i : i + 10]
-            entries = [
-                {"Id": str(idx), "MessageBody": msg} for idx, msg in enumerate(batch)
-            ]
+            entries: list[dict[str, Any]] = []
+            for idx, msg in enumerate(batch):
+                entry: dict[str, Any] = {"Id": str(idx), "MessageBody": msg}
+                # Add FIFO queue parameters if message_group_id is set
+                if self.options.message_group_id:
+                    entry["MessageGroupId"] = self.options.message_group_id
+                entries.append(entry)
 
             response = client.send_message_batch(entries)
             sent_count += len(response.get("Successful", []))
