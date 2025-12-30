@@ -384,4 +384,95 @@ public class SqsQueueTriggerListenerTests
     }
 
     #endregion
+
+    #region Known Bugs - Expected Failures
+
+    /// <summary>
+    /// BUG: Dispose is not thread-safe - concurrent calls may cause race condition.
+    /// The _disposed flag check and set are not atomic, leading to potential double-dispose
+    /// of internal resources like _cancellationTokenSource and _sqsClient.
+    /// 
+    /// GitHub Issue: https://github.com/laveeshb/azure-functions-sqs-extension/issues/40
+    /// Fix: Use Interlocked.Exchange for thread-safe dispose pattern.
+    /// </summary>
+    [Fact(Skip = "Known bug #40: Dispose race condition - not thread-safe")]
+    public void Dispose_WhenCalledConcurrently_ShouldBeThreadSafe()
+    {
+        // Arrange
+        var attribute = CreateValidAttribute();
+        var options = CreateDefaultOptions();
+        var executor = new Mock<ITriggeredFunctionExecutor>();
+        var listener = new SqsQueueTriggerListener(attribute, options, executor.Object);
+
+        // Act - Call Dispose from multiple threads simultaneously
+        var tasks = new Task[100];
+        var barrier = new Barrier(100);
+
+        for (int i = 0; i < 100; i++)
+        {
+            tasks[i] = Task.Run(() =>
+            {
+                barrier.SignalAndWait(); // Ensure all threads start together
+                listener.Dispose();
+            });
+        }
+
+        // Assert - Should not throw any exceptions due to race conditions
+        // Currently this may throw ObjectDisposedException or NullReferenceException
+        // when _cancellationTokenSource is disposed twice or accessed after null
+        var action = () => Task.WaitAll(tasks);
+        action.Should().NotThrow("Dispose should be thread-safe");
+    }
+
+    /// <summary>
+    /// BUG: Dispose during active message processing may lose messages.
+    /// When StopAsync is called during message processing, pending messages
+    /// may not be returned to the queue if Dispose is called immediately after.
+    /// 
+    /// GitHub Issue: https://github.com/laveeshb/azure-functions-sqs-extension/issues/40
+    /// Fix: Implement graceful shutdown that waits for in-flight messages to complete.
+    /// </summary>
+    [Fact(Skip = "Known bug #40: Dispose may lose in-flight messages")]
+    public async Task Dispose_DuringMessageProcessing_ShouldWaitForCompletion()
+    {
+        // Arrange
+        var attribute = CreateValidAttribute();
+        var options = CreateDefaultOptions();
+        var messageProcessingComplete = new TaskCompletionSource<bool>();
+        var messageProcessingStarted = new TaskCompletionSource<bool>();
+
+        var executor = new Mock<ITriggeredFunctionExecutor>();
+        executor.Setup(x => x.TryExecuteAsync(
+                It.IsAny<TriggeredFunctionData>(),
+                It.IsAny<CancellationToken>()))
+            .Returns(async (TriggeredFunctionData data, CancellationToken ct) =>
+            {
+                messageProcessingStarted.SetResult(true);
+                await messageProcessingComplete.Task; // Wait until we're told to complete
+                return new FunctionResult(true);
+            });
+
+        var listener = new SqsQueueTriggerListener(attribute, options, executor.Object);
+        await listener.StartAsync(CancellationToken.None);
+
+        // Simulate that message processing has started
+        await messageProcessingStarted.Task;
+
+        // Act - Dispose while message is being processed
+        var disposeTask = Task.Run(() => listener.Dispose());
+
+        // Allow message to complete
+        messageProcessingComplete.SetResult(true);
+
+        // Assert - Dispose should wait for message processing to complete
+        // Currently Dispose may return immediately, leaving message unacknowledged
+        await disposeTask;
+        
+        // Verify message was fully processed
+        executor.Verify(x => x.TryExecuteAsync(
+            It.IsAny<TriggeredFunctionData>(),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    #endregion
 }

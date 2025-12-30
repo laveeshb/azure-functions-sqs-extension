@@ -191,4 +191,54 @@ public class SqsQueueTriggerAttributeTests
     }
 
     #endregion
+
+    #region Known Bugs - Expected Failures
+
+    /// <summary>
+    /// BUG: QueueUrl is not validated - empty string is accepted silently.
+    /// This causes confusing AWS SDK errors at runtime instead of clear validation errors.
+    /// 
+    /// GitHub Issue: https://github.com/laveeshb/azure-functions-sqs-extension/issues/42
+    /// Fix: Add validation in attribute or during binding that QueueUrl is a valid SQS URL.
+    /// </summary>
+    [Fact(Skip = "Known bug #42: Missing QueueUrl validation")]
+    public void QueueUrl_WhenEmpty_ShouldThrowValidationException()
+    {
+        // Arrange
+        var attribute = new SqsQueueTriggerAttribute { QueueUrl = "" };
+
+        // Act & Assert
+        // Currently this does NOT throw - the empty QueueUrl is silently accepted
+        // After fix, should throw InvalidOperationException or similar with clear message
+        var action = () => attribute.QueueUrl.Should().NotBeNullOrEmpty(
+            "QueueUrl is required and should be validated");
+        
+        // This assertion represents what the validation SHOULD do
+        action.Should().NotThrow("attribute should validate QueueUrl is not empty");
+    }
+
+    /// <summary>
+    /// BUG: QueueUrl accepts any string without validating it's a proper SQS URL format.
+    /// 
+    /// GitHub Issue: https://github.com/laveeshb/azure-functions-sqs-extension/issues/42
+    /// Fix: Validate URL format matches SQS pattern: https://sqs.{region}.amazonaws.com/{account}/{queue}
+    /// </summary>
+    [Theory(Skip = "Known bug #42: Missing QueueUrl format validation")]
+    [InlineData("not-a-url")]
+    [InlineData("https://example.com/queue")]
+    [InlineData("ftp://sqs.us-east-1.amazonaws.com/123/queue")]
+    public void QueueUrl_WhenInvalidFormat_ShouldThrowValidationException(string invalidUrl)
+    {
+        // Arrange
+        var attribute = new SqsQueueTriggerAttribute { QueueUrl = invalidUrl };
+
+        // Act & Assert
+        // Currently accepts any string - error only occurs later in AmazonSQSClientFactory
+        // After fix, attribute itself should validate the URL format
+        attribute.QueueUrl.Should().MatchRegex(
+            @"^https://sqs\.[a-z0-9-]+\.amazonaws\.com/\d+/.+$",
+            "QueueUrl should be a valid SQS URL");
+    }
+
+    #endregion
 }

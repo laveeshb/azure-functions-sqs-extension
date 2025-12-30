@@ -34,6 +34,39 @@ public class AmazonSQSClientFactoryTests
         client.Dispose();
     }
 
+    #region Known Bugs - Expected Failures
+
+    /// <summary>
+    /// BUG: Newer AWS regions (added after SDK version 3.7.0) are not in EnumerableAllRegions.
+    /// The current implementation uses .Single() which throws when region is not found.
+    /// 
+    /// GitHub Issue: https://github.com/laveeshb/azure-functions-sqs-extension/issues/32
+    /// Fix: Use RegionEndpoint.GetBySystemName() which handles unknown regions gracefully.
+    /// </summary>
+    [Theory(Skip = "Known bug #32: Region lookup fails for newer AWS regions")]
+    [InlineData("https://sqs.ap-south-2.amazonaws.com/123456789012/my-queue", "ap-south-2")]      // Hyderabad (2022)
+    [InlineData("https://sqs.eu-south-2.amazonaws.com/123456789012/my-queue", "eu-south-2")]      // Spain (2022)
+    [InlineData("https://sqs.eu-central-2.amazonaws.com/123456789012/my-queue", "eu-central-2")]  // Zurich (2022)
+    [InlineData("https://sqs.me-central-1.amazonaws.com/123456789012/my-queue", "me-central-1")]  // UAE (2022)
+    [InlineData("https://sqs.il-central-1.amazonaws.com/123456789012/my-queue", "il-central-1")]  // Israel (2023)
+    public void Build_WithNewerAwsRegion_ShouldNotThrow(string queueUrl, string expectedRegion)
+    {
+        // Arrange
+        var attribute = new SqsQueueTriggerAttribute { QueueUrl = queueUrl };
+
+        // Act
+        var action = () => AmazonSQSClientFactory.Build(attribute);
+
+        // Assert - Currently throws InvalidOperationException: "Sequence contains no matching element"
+        // After fix, should create client successfully
+        action.Should().NotThrow();
+        
+        using var client = AmazonSQSClientFactory.Build(attribute);
+        client.Config.RegionEndpoint.SystemName.Should().Be(expectedRegion);
+    }
+
+    #endregion
+
     [Theory]
     [InlineData("")]
     [InlineData("not-a-url")]
