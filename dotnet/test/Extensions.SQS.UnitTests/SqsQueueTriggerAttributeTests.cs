@@ -201,7 +201,7 @@ public class SqsQueueTriggerAttributeTests
     /// GitHub Issue: https://github.com/laveeshb/azure-functions-sqs-extension/issues/42
     /// Fix: Add validation in attribute or during binding that QueueUrl is a valid SQS URL.
     /// </summary>
-    [Fact(Skip = "Known bug #42: Missing QueueUrl validation")]
+    [Fact]
     public void QueueUrl_WhenEmpty_ShouldThrowValidationException()
     {
         // Arrange
@@ -223,7 +223,7 @@ public class SqsQueueTriggerAttributeTests
     /// GitHub Issue: https://github.com/laveeshb/azure-functions-sqs-extension/issues/42
     /// Fix: Validate URL format matches SQS pattern: https://sqs.{region}.amazonaws.com/{account}/{queue}
     /// </summary>
-    [Theory(Skip = "Known bug #42: Missing QueueUrl format validation")]
+    [Theory]
     [InlineData("not-a-url")]
     [InlineData("https://example.com/queue")]
     [InlineData("ftp://sqs.us-east-1.amazonaws.com/123/queue")]

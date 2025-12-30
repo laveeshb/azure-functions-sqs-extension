@@ -43,7 +43,7 @@ public class AmazonSQSClientFactoryTests
     /// GitHub Issue: https://github.com/laveeshb/azure-functions-sqs-extension/issues/32
     /// Fix: Use RegionEndpoint.GetBySystemName() which handles unknown regions gracefully.
     /// </summary>
-    [Theory(Skip = "Known bug #32: Region lookup fails for newer AWS regions")]
+    [Theory]
     [InlineData("https://sqs.ap-south-2.amazonaws.com/123456789012/my-queue", "ap-south-2")]      // Hyderabad (2022)
     [InlineData("https://sqs.eu-south-2.amazonaws.com/123456789012/my-queue", "eu-south-2")]      // Spain (2022)
     [InlineData("https://sqs.eu-central-2.amazonaws.com/123456789012/my-queue", "eu-central-2")]  // Zurich (2022)
