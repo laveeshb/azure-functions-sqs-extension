@@ -1,6 +1,18 @@
 # LocalStack Testing Guide
 
-This directory contains tools for testing the Azure Functions SQS Extension with LocalStack, allowing you to test locally without connecting to AWS.
+This directory contains tools for testing the Azure Functions AWS Extensions with LocalStack, allowing you to test locally without connecting to AWS.
+
+## Supported AWS Services
+
+LocalStack provides local emulation for all AWS services supported by this extension:
+
+| Service | Status | LocalStack Support |
+|---------|--------|-------------------|
+| SQS | ✅ Full | Queues, FIFO, DLQ, attributes |
+| EventBridge | ✅ Full | Event buses, rules, targets |
+| SNS | ✅ Full | Topics, subscriptions, filtering |
+| S3 | ✅ Full | Buckets, objects, events |
+| Kinesis | ✅ Full | Streams, shards, records |
 
 ## Prerequisites
 
@@ -11,7 +23,26 @@ This directory contains tools for testing the Azure Functions SQS Extension with
 
 ## Quick Start
 
-### 1. Start LocalStack
+### Option 1: Setup All Services
+
+**Linux/macOS:**
+```bash
+./localstack/unix/setup-all.sh
+```
+
+**Windows:**
+```powershell
+.\localstack\windows\setup-all.ps1
+```
+
+This creates test resources for ALL AWS services:
+- SQS queues (`test-queue`, `test-queue.fifo`, `test-dlq`)
+- EventBridge event bus (`test-event-bus`)
+- SNS topic (`test-topic`) with SQS subscription
+- S3 bucket (`test-bucket`) with event notifications
+- Kinesis stream (`test-stream`)
+
+### Option 2: Setup SQS Only
 
 **Linux/macOS:**
 ```bash
@@ -22,11 +53,6 @@ This directory contains tools for testing the Azure Functions SQS Extension with
 ```powershell
 .\localstack\windows\setup-localstack.ps1
 ```
-
-This script will:
-- Start LocalStack in a Docker container
-- Create test SQS queues (`test-queue`, `test-queue.fifo`, `test-dlq`)
-- Display configuration for your `local.settings.json`
 
 ### 2. Configure Your Function App
 
@@ -41,7 +67,21 @@ Update your function app's `local.settings.json` with LocalStack settings:
     "AWS_REGION": "us-east-1",
     "AWS_ACCESS_KEY_ID": "test",
     "AWS_SECRET_ACCESS_KEY": "test",
-    "AWS_ENDPOINT_URL": "http://localhost:4566"
+    
+    "SQS_QUEUE_URL": "http://localhost:4566/000000000000/test-queue",
+    "SQS_SERVICE_URL": "http://localhost:4566",
+    
+    "EVENTBRIDGE_SERVICE_URL": "http://localhost:4566",
+    "EVENT_BUS_NAME": "test-event-bus",
+    
+    "SNS_SERVICE_URL": "http://localhost:4566",
+    "SNS_TOPIC_ARN": "arn:aws:sns:us-east-1:000000000000:test-topic",
+    
+    "S3_SERVICE_URL": "http://localhost:4566",
+    "S3_BUCKET_NAME": "test-bucket",
+    
+    "KINESIS_SERVICE_URL": "http://localhost:4566",
+    "KINESIS_STREAM_NAME": "test-stream"
   }
 }
 ```
@@ -162,19 +202,21 @@ docker-compose -f localstack/docker-compose.localstack.yml down -v
 
 ## Manual Queue Operations
 
-### List Queues
+### SQS Operations
+
+#### List Queues
 ```bash
 aws --endpoint-url=http://localhost:4566 sqs list-queues --region us-east-1
 ```
 
-### Create Queue
+#### Create Queue
 ```bash
 aws --endpoint-url=http://localhost:4566 sqs create-queue \
     --queue-name my-test-queue \
     --region us-east-1
 ```
 
-### Send Message
+#### Send Message
 ```bash
 aws --endpoint-url=http://localhost:4566 sqs send-message \
     --queue-url http://localhost:4566/000000000000/test-queue \
@@ -182,17 +224,86 @@ aws --endpoint-url=http://localhost:4566 sqs send-message \
     --region us-east-1
 ```
 
-### Receive Messages
+#### Receive Messages
 ```bash
 aws --endpoint-url=http://localhost:4566 sqs receive-message \
     --queue-url http://localhost:4566/000000000000/test-queue \
     --region us-east-1
 ```
 
-### Purge Queue
+#### Purge Queue
 ```bash
 aws --endpoint-url=http://localhost:4566 sqs purge-queue \
     --queue-url http://localhost:4566/000000000000/test-queue \
+    --region us-east-1
+```
+
+### EventBridge Operations
+
+#### List Event Buses
+```bash
+aws --endpoint-url=http://localhost:4566 events list-event-buses --region us-east-1
+```
+
+#### Put Events
+```bash
+aws --endpoint-url=http://localhost:4566 events put-events \
+    --entries '[{"EventBusName":"test-event-bus","Source":"test","DetailType":"TestEvent","Detail":"{\"key\":\"value\"}"}]' \
+    --region us-east-1
+```
+
+### SNS Operations
+
+#### List Topics
+```bash
+aws --endpoint-url=http://localhost:4566 sns list-topics --region us-east-1
+```
+
+#### Publish Message
+```bash
+aws --endpoint-url=http://localhost:4566 sns publish \
+    --topic-arn arn:aws:sns:us-east-1:000000000000:test-topic \
+    --message "Test message" \
+    --region us-east-1
+```
+
+### S3 Operations
+
+#### List Buckets
+```bash
+aws --endpoint-url=http://localhost:4566 s3 ls
+```
+
+#### Upload File
+```bash
+aws --endpoint-url=http://localhost:4566 s3 cp myfile.txt s3://test-bucket/
+```
+
+#### List Objects
+```bash
+aws --endpoint-url=http://localhost:4566 s3 ls s3://test-bucket/
+```
+
+### Kinesis Operations
+
+#### List Streams
+```bash
+aws --endpoint-url=http://localhost:4566 kinesis list-streams --region us-east-1
+```
+
+#### Put Record
+```bash
+aws --endpoint-url=http://localhost:4566 kinesis put-record \
+    --stream-name test-stream \
+    --partition-key "key1" \
+    --data "dGVzdCBkYXRh" \
+    --region us-east-1
+```
+
+#### Describe Stream
+```bash
+aws --endpoint-url=http://localhost:4566 kinesis describe-stream \
+    --stream-name test-stream \
     --region us-east-1
 ```
 
@@ -203,12 +314,32 @@ aws --endpoint-url=http://localhost:4566 sqs purge-queue \
 - Check if port 4566 is available: `lsof -i :4566`
 - View LocalStack logs: `docker-compose -f localstack/docker-compose.localstack.yml logs`
 
-### Function Not Receiving Messages
+### Function Not Receiving Messages (SQS)
 1. Verify LocalStack is running: `curl http://localhost:4566/_localstack/health`
 2. Check queue exists: `aws --endpoint-url=http://localhost:4566 sqs list-queues --region us-east-1`
 3. Verify AWS credentials in `local.settings.json` (use `test`/`test`)
 4. Ensure `AWS_ENDPOINT_URL` is set to `http://localhost:4566`
 5. Check function app logs for connection errors
+
+### EventBridge Events Not Triggering
+1. Verify event bus exists: `aws --endpoint-url=http://localhost:4566 events list-event-buses --region us-east-1`
+2. Check rules on the event bus: `aws --endpoint-url=http://localhost:4566 events list-rules --event-bus-name test-event-bus --region us-east-1`
+3. Ensure `AWS_EVENTBRIDGE_URL` is configured correctly
+
+### SNS Messages Not Being Delivered
+1. Check topic exists: `aws --endpoint-url=http://localhost:4566 sns list-topics --region us-east-1`
+2. Verify subscriptions: `aws --endpoint-url=http://localhost:4566 sns list-subscriptions-by-topic --topic-arn arn:aws:sns:us-east-1:000000000000:test-topic --region us-east-1`
+3. Ensure `AWS_SNS_URL` is configured correctly
+
+### S3 Events Not Triggering
+1. Check bucket exists: `aws --endpoint-url=http://localhost:4566 s3 ls`
+2. Verify bucket notification configuration: `aws --endpoint-url=http://localhost:4566 s3api get-bucket-notification-configuration --bucket test-bucket`
+3. Ensure `AWS_S3_URL` is configured correctly
+
+### Kinesis Stream Issues
+1. Check stream exists: `aws --endpoint-url=http://localhost:4566 kinesis list-streams --region us-east-1`
+2. Describe stream: `aws --endpoint-url=http://localhost:4566 kinesis describe-stream --stream-name test-stream --region us-east-1`
+3. Ensure `AWS_KINESIS_URL` is configured correctly
 
 ### AWS CLI Not Found
 ```bash
@@ -225,11 +356,36 @@ sudo apt-get install awscli
 ## LocalStack Features
 
 LocalStack provides a fully functional local AWS cloud stack, including:
+
+### SQS Features
 - **Standard queues**: Regular SQS queues
 - **FIFO queues**: First-In-First-Out queues with exactly-once processing
 - **Dead letter queues**: For handling failed messages
 - **Message attributes**: Full support for custom attributes
 - **Batch operations**: Send/receive/delete multiple messages
+
+### EventBridge Features
+- **Event buses**: Custom and default event buses
+- **Rules and targets**: Route events to targets
+- **Event patterns**: Filter events based on patterns
+
+### SNS Features
+- **Topics**: Standard and FIFO topics
+- **Subscriptions**: HTTP, SQS, Lambda subscriptions
+- **Message filtering**: Filter policies for subscriptions
+- **Message attributes**: Custom message metadata
+
+### S3 Features
+- **Buckets and objects**: Full CRUD operations
+- **Event notifications**: Trigger on object operations
+- **Versioning**: Object version management
+- **Lifecycle policies**: Automated object management
+
+### Kinesis Features
+- **Data streams**: Real-time data streaming
+- **Shards**: Parallel processing units
+- **Records**: Put and get records
+- **Enhanced fan-out**: Consumer applications
 
 ## Differences from AWS
 
@@ -243,5 +399,9 @@ While LocalStack provides excellent AWS emulation, some differences exist:
 
 - [LocalStack Documentation](https://docs.localstack.cloud/)
 - [LocalStack SQS Documentation](https://docs.localstack.cloud/user-guide/aws/sqs/)
-- [AWS CLI SQS Documentation](https://docs.aws.amazon.com/cli/latest/reference/sqs/)
+- [LocalStack EventBridge Documentation](https://docs.localstack.cloud/user-guide/aws/events/)
+- [LocalStack SNS Documentation](https://docs.localstack.cloud/user-guide/aws/sns/)
+- [LocalStack S3 Documentation](https://docs.localstack.cloud/user-guide/aws/s3/)
+- [LocalStack Kinesis Documentation](https://docs.localstack.cloud/user-guide/aws/kinesis/)
+- [AWS CLI Reference](https://docs.aws.amazon.com/cli/latest/reference/)
 - [Azure Functions Local Development](https://learn.microsoft.com/azure/azure-functions/functions-develop-local)
