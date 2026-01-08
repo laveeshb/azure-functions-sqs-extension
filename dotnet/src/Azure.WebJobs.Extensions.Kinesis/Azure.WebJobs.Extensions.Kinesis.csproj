@@ -1,0 +1,42 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net6.0;net8.0</TargetFrameworks>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <PackageId>Extensions.Azure.WebJobs.Kinesis</PackageId>
+    <Authors>Azure Functions AWS Extensions</Authors>
+    <Company />
+    <Product>Azure WebJobs Kinesis Extension</Product>
+    <Description>Amazon Kinesis extension for Azure Functions. Supports both in-process and isolated worker hosting models.</Description>
+    <RepositoryType>Github</RepositoryType>
+    <AssemblyName>Azure.WebJobs.Extensions.Kinesis</AssemblyName>
+    <RootNamespace>Azure.WebJobs.Extensions.Kinesis</RootNamespace>
+    <Version>1.0.0</Version>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageTags>Azure Functions WebJobs bindings extension Kinesis AWS Amazon</PackageTags>
+    <PackageProjectUrl>https://github.com/laveeshb/azure-functions-sqs-extension</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/laveeshb/azure-functions-sqs-extension</RepositoryUrl>
+    <PackageReleaseNotes>https://github.com/laveeshb/azure-functions-sqs-extension/releases</PackageReleaseNotes>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Extensions.AWS.UnitTests" />
+    <InternalsVisibleTo Include="Extensions.AWS.IntegrationTests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="AWSSDK.Kinesis" Version="3.7.400" />
+    <PackageReference Include="Microsoft.Azure.WebJobs" Version="3.0.41" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+</Project>

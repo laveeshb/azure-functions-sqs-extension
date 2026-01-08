@@ -1,25 +1,49 @@
-# Azure Functions SQS Extension - In-Process Test Application
+# Azure Functions AWS Extensions - In-Process Test Application
 
-This test application demonstrates the **In-Process (WebJobs)** hosting model for Azure Functions with SQS bindings.
+This test application demonstrates the **In-Process (WebJobs)** hosting model for Azure Functions with AWS service bindings.
 
 ## In-Process Model Features
 
-- Uses `SqsQueueTriggerAttribute` for triggers
-- Uses `SqsQueueOutAttribute` for output bindings
+- Uses `SqsQueueTriggerAttribute` for SQS triggers
+- Uses `SnsTriggerAttribute` for SNS webhook triggers
+- Uses `EventBridgeTriggerAttribute` for EventBridge webhook triggers
+- Uses `KinesisTriggerAttribute` for Kinesis stream triggers
+- Uses `S3Attribute` for S3 input bindings
+- Uses `*OutAttribute` for output bindings
 - Supports `IAsyncCollector<T>` for sending messages
-- Traditional WebJobs SDK patterns
 
 ## Functions Included
 
-### Trigger Functions
+### SQS Functions
 - `ProcessSqsMessage` - Basic SQS message processing
 - `ProcessSqsMessageAsync` - Async message processing
-- `ProcessSqsMessageBody` - String body binding
-
-### Output Functions
 - `SendSimpleMessage` - Send simple string messages
-- `SendBatchMessages` - Send multiple messages in one invocation
-- `SendAdvancedMessage` - Send full Message objects with attributes
+- `SendBatchMessages` - Send multiple messages
+
+### SNS Functions
+- `ProcessSnsNotification` - Receive SNS webhook notifications
+- `PublishToSns` - Publish messages to SNS topics
+- `PublishToSnsWithAttributes` - Publish with message attributes
+
+### EventBridge Functions
+- `ProcessEventBridgeEvent` - Receive events via API Destinations
+- `SendToEventBridge` - Send events to EventBridge
+- `SendBatchToEventBridge` - Send multiple events
+
+### S3 Functions
+- `ReadS3AsString` - Read S3 objects as strings
+- `ReadS3AsBytes` - Read S3 objects as byte arrays
+- `ReadS3Object` - Read with full metadata
+- `GetDocument` - Dynamic key binding with route params
+- `UploadToS3` - Upload content to S3
+- `UploadJsonToS3` - Upload JSON with metadata
+
+### Kinesis Functions
+- `ProcessKinesisRecord` - Process Kinesis stream records
+- `ProcessLatestKinesisRecords` - Start from latest record
+- `SendToKinesis` - Send records to Kinesis
+- `SendBatchToKinesis` - Send multiple records
+- `SendBinaryToKinesis` - Send binary data
 
 ## Running the Test Application
 
@@ -35,7 +59,11 @@ This test application demonstrates the **In-Process (WebJobs)** hosting model fo
    {
      "Values": {
        "SQS_QUEUE_URL": "https://sqs.us-east-1.amazonaws.com/your-account/your-queue",
-       "SQS_OUTPUT_QUEUE_URL": "https://sqs.us-east-1.amazonaws.com/your-account/your-output-queue"
+       "SQS_OUTPUT_QUEUE_URL": "https://sqs.us-east-1.amazonaws.com/your-account/your-output-queue",
+       "SNS_TOPIC_ARN": "arn:aws:sns:us-east-1:your-account:your-topic",
+       "EVENTBRIDGE_BUS_NAME": "default",
+       "S3_BUCKET_NAME": "your-bucket-name",
+       "KINESIS_STREAM_NAME": "your-stream-name"
      }
    }
    ```
