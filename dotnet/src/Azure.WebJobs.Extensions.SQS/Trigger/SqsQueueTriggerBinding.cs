@@ -34,8 +34,11 @@ public class SqsQueueTriggerBinding : ITriggerBinding
 
     public Task<ITriggerData> BindAsync(object value, ValueBindingContext context)
     {
+        // Use the parameter type to enable automatic deserialization to S3EventNotification, etc.
+        var targetType = _parameterInfo.ParameterType;
+        
         return Task.FromResult<ITriggerData>(new TriggerData(
-            valueProvider: new SqsQueueMessageValueProvider(value),
+            valueProvider: new SqsQueueMessageValueProvider(value, targetType),
             bindingData: new Dictionary<string, object>()));
     }
 
