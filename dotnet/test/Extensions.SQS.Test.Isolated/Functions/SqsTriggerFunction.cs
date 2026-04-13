@@ -21,7 +21,7 @@ public class SqsTriggerFunction
     /// </summary>
     [Function(nameof(ProcessSqsMessage))]
     public void ProcessSqsMessage(
-        [SqsTrigger("%SQS_QUEUE_URL%")] Message message)
+        [SqsQueueTrigger("%SQS_QUEUE_URL%")] Message message)
     {
         _logger.LogInformation("=== SQS Message Received ===");
         _logger.LogInformation("Message ID: {MessageId}", message.MessageId);
@@ -42,7 +42,7 @@ public class SqsTriggerFunction
     /// </summary>
     [Function(nameof(ProcessSqsMessageAsync))]
     public async Task ProcessSqsMessageAsync(
-        [SqsTrigger("%SQS_QUEUE_URL%")] Message message)
+        [SqsQueueTrigger("%SQS_QUEUE_URL%")] Message message)
     {
         _logger.LogInformation("Processing message asynchronously: {MessageId}", message.MessageId);
 

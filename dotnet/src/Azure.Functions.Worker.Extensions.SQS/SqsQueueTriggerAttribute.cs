@@ -6,16 +6,18 @@ using Microsoft.Azure.Functions.Worker.Extensions.Abstractions;
 /// <summary>
 /// Attribute used to mark a function that should be triggered by Amazon SQS queue messages.
 /// Compatible with Azure Functions isolated worker model.
+/// The class name must match the in-process attribute (SqsQueueTriggerAttribute) so the
+/// binding type "sqsQueueTrigger" matches what the host-side WebJobs extension registers.
 /// </summary>
 [InputConverter(typeof(SqsMessageConverter))]
 [ConverterFallbackBehavior(ConverterFallbackBehavior.Default)]
-public sealed class SqsTriggerAttribute : TriggerBindingAttribute
+public sealed class SqsQueueTriggerAttribute : TriggerBindingAttribute
 {
     /// <summary>
-    /// Initializes a new instance of the <see cref="SqsTriggerAttribute"/> class.
+    /// Initializes a new instance of the <see cref="SqsQueueTriggerAttribute"/> class.
     /// </summary>
     /// <param name="queueUrl">The URL of the SQS queue to monitor.</param>
-    public SqsTriggerAttribute(string queueUrl)
+    public SqsQueueTriggerAttribute(string queueUrl)
     {
         QueueUrl = queueUrl ?? throw new ArgumentNullException(nameof(queueUrl));
     }
