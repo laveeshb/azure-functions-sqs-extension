@@ -67,7 +67,7 @@ public class SqsFunctions
 
     [Function(nameof(ProcessSqsMessage))]
     public void ProcessSqsMessage(
-        [SqsTrigger("%SQS_QUEUE_URL%")] Message message)
+        [SqsQueueTrigger("%SQS_QUEUE_URL%")] Message message)
     {
         _logger.LogInformation("Processing message: {MessageId}", message.MessageId);
         _logger.LogInformation("Message body: {Body}", message.Body);
@@ -176,12 +176,12 @@ The credential chain order:
 
 ## Attributes
 
-### SqsTriggerAttribute
+### SqsQueueTriggerAttribute
 
 Triggers a function when messages are available in an SQS queue.
 
 ```csharp
-[SqsTrigger(
+[SqsQueueTrigger(
     queueUrl: "%SQS_QUEUE_URL%",  // Required: Queue URL
     AWSKeyId = null,              // Optional: AWS Access Key ID
     AWSAccessKey = null,          // Optional: AWS Secret Access Key
@@ -200,7 +200,7 @@ Triggers a function when messages are available in an SQS queue.
 ```csharp
 [Function("ProcessFullMessage")]
 public void ProcessFullMessage(
-    [SqsTrigger("%SQS_QUEUE_URL%")] Message message,
+    [SqsQueueTrigger("%SQS_QUEUE_URL%")] Message message,
     FunctionContext context)
 {
     var logger = context.GetLogger("ProcessFullMessage");
@@ -222,7 +222,7 @@ public void ProcessFullMessage(
 ```csharp
 [Function("ProcessMessageBody")]
 public void ProcessMessageBody(
-    [SqsTrigger("%SQS_QUEUE_URL%")] string messageBody)
+    [SqsQueueTrigger("%SQS_QUEUE_URL%")] string messageBody)
 {
     // messageBody contains only the message body content
     Console.WriteLine($"Received: {messageBody}");
@@ -234,7 +234,7 @@ public void ProcessMessageBody(
 ```csharp
 [Function("ProcessAsync")]
 public async Task ProcessAsync(
-    [SqsTrigger("%SQS_QUEUE_URL%")] Message message)
+    [SqsQueueTrigger("%SQS_QUEUE_URL%")] Message message)
 {
     // Simulate async work
     await Task.Delay(100);
@@ -307,7 +307,7 @@ public class SqsSender
 <!-- Update packages -->
 <PackageReference Include="Microsoft.Azure.Functions.Worker" Version="1.23.0" />
 <PackageReference Include="Microsoft.Azure.Functions.Worker.Sdk" Version="1.18.1" />
-<PackageReference Include="Extensions.Azure.Functions.Worker.SQS" Version="1.0.0" />
+<PackageReference Include="Extensions.Azure.Functions.Worker.SQS" Version="1.1.1" />
 ```
 
 #### 2. Update Configuration
@@ -336,7 +336,7 @@ public void Process(
 // New (Isolated Worker)
 [Function("Process")]
 public void Process(
-    [SqsTrigger("%SQS_QUEUE_URL%")] Message message)
+    [SqsQueueTrigger("%SQS_QUEUE_URL%")] Message message)
 {
     // Inject ILogger via constructor
 }
@@ -419,5 +419,5 @@ The isolated worker model is Microsoft's recommended approach for new Azure Func
 
 - [GitHub Repository](https://github.com/laveeshb/azure-functions-sqs-extension)
 - [NuGet Package](https://www.nuget.org/packages/Extensions.Azure.Functions.Worker.SQS)
-- [In-Process Package](https://www.nuget.org/packages/Extensions.Azure.WebJobs.SQS)
+- [Host-side Package (Extensions.Azure.WebJobs.SQS)](https://www.nuget.org/packages/Extensions.Azure.WebJobs.SQS)
 - [Report Issues](https://github.com/laveeshb/azure-functions-sqs-extension/issues)

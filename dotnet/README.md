@@ -136,7 +136,7 @@ public class SqsFunctions
 
     [Function("ProcessSQSMessage")]
     public void Run(
-        [SqsTrigger(QueueUrl = "%SQS_QUEUE_URL%")] Message message)
+        [SqsQueueTrigger("%SQS_QUEUE_URL%")] Message message)
     {
         _logger.LogInformation("Received message: {MessageId}", message.MessageId);
         _logger.LogInformation("Body: {Body}", message.Body);
