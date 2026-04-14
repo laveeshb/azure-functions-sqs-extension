@@ -4,11 +4,12 @@ using System.Text.Json;
 using Amazon.SQS.Model;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Converters;
+using Microsoft.Azure.Functions.Worker.Core;
 using Microsoft.Azure.Functions.Worker.Extensions.Abstractions;
 
 /// <summary>
 /// Converter to bind SQS message data to strongly typed parameters in isolated worker functions.
-/// Converts ModelBindingData from the Azure Functions host to SQS message types.
+/// Converts ParameterBindingData from the Azure Functions host to SQS message types.
 /// </summary>
 [SupportsDeferredBinding]
 [SupportedTargetType(typeof(Message))]
@@ -21,27 +22,28 @@ internal sealed class SqsMessageConverter : IInputConverter
     {
         try
         {
-            // For now, handle string sources from trigger data
-            // The host will serialize SQS messages as JSON strings
-            if (context.Source is string json && !string.IsNullOrEmpty(json))
+            var json = ExtractJson(context.Source);
+            if (string.IsNullOrEmpty(json))
             {
-                if (context.TargetType == typeof(Message))
-                {
-                    var message = JsonSerializer.Deserialize<SqsMessageData>(json);
-                    if (message == null)
-                    {
-                        throw new InvalidOperationException("Failed to deserialize SQS message data.");
-                    }
+                return new ValueTask<ConversionResult>(ConversionResult.Unhandled());
+            }
 
-                    var result = ConvertToSqsMessage(message);
-                    return new ValueTask<ConversionResult>(ConversionResult.Success(result));
+            if (context.TargetType == typeof(Message))
+            {
+                var message = JsonSerializer.Deserialize<SqsMessageData>(json);
+                if (message == null)
+                {
+                    throw new InvalidOperationException("Failed to deserialize SQS message data.");
                 }
 
-                if (context.TargetType == typeof(string))
-                {
-                    var message = JsonSerializer.Deserialize<SqsMessageData>(json);
-                    return new ValueTask<ConversionResult>(ConversionResult.Success(message?.Body ?? json));
-                }
+                var result = ConvertToSqsMessage(message);
+                return new ValueTask<ConversionResult>(ConversionResult.Success(result));
+            }
+
+            if (context.TargetType == typeof(string))
+            {
+                var message = JsonSerializer.Deserialize<SqsMessageData>(json);
+                return new ValueTask<ConversionResult>(ConversionResult.Success(message?.Body ?? json));
             }
 
             return new ValueTask<ConversionResult>(ConversionResult.Unhandled());
@@ -50,6 +52,17 @@ internal sealed class SqsMessageConverter : IInputConverter
         {
             return new ValueTask<ConversionResult>(ConversionResult.Failed(ex));
         }
+    }
+
+    private static string? ExtractJson(object? source)
+    {
+        return source switch
+        {
+            ModelBindingData bindingData when string.Equals(bindingData.ContentType, ExpectedContentType, StringComparison.OrdinalIgnoreCase)
+                => bindingData.Content?.ToString(),
+            string str => str,
+            _ => null
+        };
     }
 
     private static Message ConvertToSqsMessage(SqsMessageData content)
@@ -83,8 +96,8 @@ internal sealed class SqsMessageConverter : IInputConverter
             {
                 DataType = kvp.Value.DataType,
                 StringValue = kvp.Value.StringValue,
-                BinaryValue = kvp.Value.BinaryValue != null 
-                    ? new MemoryStream(kvp.Value.BinaryValue) 
+                BinaryValue = kvp.Value.BinaryValue != null
+                    ? new MemoryStream(kvp.Value.BinaryValue)
                     : null
             };
         }

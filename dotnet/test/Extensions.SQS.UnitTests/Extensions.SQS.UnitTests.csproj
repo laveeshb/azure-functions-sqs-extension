@@ -26,6 +26,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Azure.WebJobs.Extensions.SQS\Azure.WebJobs.Extensions.SQS.csproj" />
+    <ProjectReference Include="..\..\src\Azure.Functions.Worker.Extensions.SQS\Azure.Functions.Worker.Extensions.SQS.csproj" />
   </ItemGroup>
 
 </Project>
