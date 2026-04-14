@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="AWSSDK.SQS" Version="3.7.*" />
+    <PackageReference Include="AWSSDK.EventBridge" Version="3.7.*" />
+    <PackageReference Include="AWSSDK.SimpleNotificationService" Version="3.7.*" />
+    <PackageReference Include="AWSSDK.S3" Version="3.7.*" />
+    <PackageReference Include="AWSSDK.Kinesis" Version="3.7.*" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.8.0" />
+    <PackageReference Include="xunit" Version="2.7.0" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.5.6">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="FluentAssertions" Version="6.12.0" />
+    <PackageReference Include="Testcontainers" Version="3.7.0" />
+    <PackageReference Include="Testcontainers.LocalStack" Version="3.7.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Azure.WebJobs.Extensions.SQS\Azure.WebJobs.Extensions.SQS.csproj" />
+    <ProjectReference Include="..\..\src\Azure.Functions.Worker.Extensions.EventBridge\Azure.Functions.Worker.Extensions.EventBridge.csproj" />
+    <ProjectReference Include="..\..\src\Azure.Functions.Worker.Extensions.SNS\Azure.Functions.Worker.Extensions.SNS.csproj" />
+    <ProjectReference Include="..\..\src\Azure.Functions.Worker.Extensions.S3\Azure.Functions.Worker.Extensions.S3.csproj" />
+    <ProjectReference Include="..\..\src\Azure.Functions.Worker.Extensions.Kinesis\Azure.Functions.Worker.Extensions.Kinesis.csproj" />
+  </ItemGroup>
+
+</Project>

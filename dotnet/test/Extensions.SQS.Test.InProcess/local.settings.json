@@ -4,8 +4,21 @@
     "AzureWebJobsStorage": "UseDevelopmentStorage=true",
     "FUNCTIONS_WORKER_RUNTIME": "dotnet",
     "FUNCTIONS_INPROC_NET8_ENABLED": "1",
+    
+    "AWS_REGION": "us-east-1",
+    "AWS_ACCESS_KEY_ID": "",
+    "AWS_SECRET_ACCESS_KEY": "",
+    
     "SQS_QUEUE_URL": "",
     "SQS_OUTPUT_QUEUE_URL": "",
-    "AWS_REGION": "us-east-1"
+    
+    "SNS_TOPIC_ARN": "",
+    
+    "EVENTBRIDGE_BUS_NAME": "default",
+    
+    "S3_BUCKET_NAME": "",
+    
+    "KINESIS_STREAM_NAME": "",
+    "KINESIS_STREAM_NAME_LATEST": ""
   }
 }

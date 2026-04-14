@@ -1,12 +1,19 @@
-# Azure Functions SQS Extension for .NET
+# Azure Functions AWS Extensions for .NET
 
-Azure Functions bindings for Amazon Simple Queue Service (SQS) supporting both in-process and isolated worker hosting models.
+Azure Functions bindings for AWS services supporting both in-process and isolated worker hosting models.
 
 ## 📁 Repository Structure
 
 ```
 dotnet/
-├── src/              # Source code for both SDK packages
+├── src/                                                    
+│   ├── Azure.WebJobs.Extensions.SQS/           # In-process SQS (legacy)
+│   ├── Azure.Functions.Worker.Extensions.SQS/  # Isolated SQS
+│   ├── Azure.Functions.Worker.Extensions.AWS.Common/    # Shared utilities
+│   ├── Azure.Functions.Worker.Extensions.EventBridge/   # EventBridge output
+│   ├── Azure.Functions.Worker.Extensions.SNS/           # SNS output
+│   ├── Azure.Functions.Worker.Extensions.S3/            # S3 output
+│   └── Azure.Functions.Worker.Extensions.Kinesis/       # Kinesis output
 ├── test/             # Test projects and sample applications
 ├── scripts/          # Build, test, and setup scripts
 ├── localstack/       # LocalStack testing infrastructure & documentation
@@ -16,12 +23,24 @@ dotnet/
 
 ## Packages
 
-This extension provides two separate packages following Microsoft's pattern for Azure Functions:
+### Isolated Worker Packages (Recommended)
+
+| Package | Description | NuGet |
+|---------|-------------|-------|
+| **Extensions.Azure.Functions.Worker.SQS** | SQS trigger & output bindings | [![NuGet](https://img.shields.io/nuget/v/Extensions.Azure.Functions.Worker.SQS.svg)](https://www.nuget.org/packages/Extensions.Azure.Functions.Worker.SQS) |
+| **Extensions.Azure.Functions.Worker.EventBridge** | EventBridge trigger & output | Coming soon |
+| **Extensions.Azure.Functions.Worker.SNS** | SNS trigger & output | Coming soon |
+| **Extensions.Azure.Functions.Worker.S3** | S3 input & output | Coming soon |
+| **Extensions.Azure.Functions.Worker.Kinesis** | Kinesis trigger & output | Coming soon |
+| **Extensions.Azure.Functions.Worker.AWS.Common** | Shared credential & config utilities | Coming soon |
+
+### In-Process Package (Legacy)
 
 | Package | Hosting Model | NuGet | Documentation |
 |---------|---------------|-------|---------------|
-| **Extensions.Azure.WebJobs.SQS** | In-process | Coming soon | [README](./src/Azure.WebJobs.Extensions.SQS/README.md) |
-| **Extensions.Azure.Functions.Worker.SQS** | Isolated worker | Coming soon | [README](./src/Azure.Functions.Worker.Extensions.SQS/README.md) |
+| **Extensions.Azure.WebJobs.SQS** | In-process | [![NuGet](https://img.shields.io/nuget/v/Extensions.Azure.WebJobs.SQS.svg)](https://www.nuget.org/packages/Extensions.Azure.WebJobs.SQS) | [README](./src/Azure.WebJobs.Extensions.SQS/README.md) |
+
+> **Note:** The in-process model is [retiring November 2026](https://learn.microsoft.com/azure/azure-functions/migrate-version-3-version-4). New development targets the isolated worker model.
 
 ## Installation
 
@@ -56,14 +75,22 @@ dotnet add package Extensions.Azure.Functions.Worker.SQS
 
 ## Features
 
-| Feature | In-Process | Isolated Worker |
-|---------|------------|-----------------|
-| SQS Trigger Binding | ✅ | ✅ |
-| SQS Output Binding | ✅ | ✅ |
-| AWS Credential Chain | ✅ | ✅ |
-| Long Polling | ✅ | ✅ |
-| Batch Processing | ✅ | ✅ |
-| Message Attributes | ✅ | ✅ |
+| Feature | SQS | EventBridge | SNS | S3 | Kinesis |
+|---------|-----|-------------|-----|-----|---------|
+| Trigger Binding | ✅ Poll | ✅ Webhook | ✅ Webhook | ❌ | ✅ Poll |
+| Input Binding | ❌ | ❌ | ❌ | ✅ | ❌ |
+| Output Binding | ✅ | ✅ | ✅ | ✅ | ✅ |
+| AWS Credential Chain | ✅ | ✅ | ✅ | ✅ | ✅ |
+| LocalStack Support | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Batch Operations | ✅ | ✅ | ✅ | ❌ | ✅ |
+| Message/Event Parsing | ✅ | ✅ | ✅ | ✅ | ✅ |
+
+### Trigger Patterns
+
+- **Poll-based (SQS, Kinesis):** Azure Functions polls AWS services directly using long-polling
+- **Webhook-based (SNS, EventBridge):** AWS pushes events to your Azure Functions HTTP endpoint
+  - **SNS:** Configure HTTPS subscription to your function URL
+  - **EventBridge:** Use API Destinations to send events to your function URL
 
 ## Quick Start
 
@@ -282,6 +309,207 @@ If your Azure Function runs on AWS infrastructure (hybrid scenarios), the extens
 - Commit credentials to source control
 - Use root AWS account credentials
 - Share credentials across environments
+
+## New AWS Extensions Usage (Isolated Worker)
+
+### EventBridge - Send Events
+
+```csharp
+using Amazon.EventBridge;
+using Amazon.EventBridge.Model;
+using Azure.Functions.Worker.Extensions.EventBridge;
+using Microsoft.Azure.Functions.Worker;
+using Microsoft.Azure.Functions.Worker.Http;
+
+public class EventBridgeFunctions
+{
+    [Function("SendToEventBridge")]
+    public async Task<HttpResponseData> SendEvent(
+        [HttpTrigger(AuthorizationLevel.Function, "post")] HttpRequestData req)
+    {
+        var body = await new StreamReader(req.Body).ReadToEndAsync();
+
+        using var client = EventBridgeClientFactory.Create(
+            region: Environment.GetEnvironmentVariable("AWS_REGION"),
+            serviceUrl: Environment.GetEnvironmentVariable("EVENTBRIDGE_SERVICE_URL"));
+
+        var response = await client.PutEventsAsync(new PutEventsRequest
+        {
+            Entries = new List<PutEventsRequestEntry>
+            {
+                new()
+                {
+                    EventBusName = Environment.GetEnvironmentVariable("EVENT_BUS_NAME"),
+                    Source = "azure.functions",
+                    DetailType = "OrderCreated",
+                    Detail = body,
+                    Time = DateTime.UtcNow
+                }
+            }
+        });
+
+        return req.CreateResponse(
+            response.FailedEntryCount == 0 ? HttpStatusCode.OK : HttpStatusCode.InternalServerError);
+    }
+}
+```
+
+### SNS - Publish Messages
+
+```csharp
+using Amazon.SimpleNotificationService.Model;
+using Azure.Functions.Worker.Extensions.SNS;
+using Microsoft.Azure.Functions.Worker;
+using Microsoft.Azure.Functions.Worker.Http;
+
+public class SnsFunctions
+{
+    [Function("PublishToSns")]
+    public async Task<HttpResponseData> Publish(
+        [HttpTrigger(AuthorizationLevel.Function, "post")] HttpRequestData req)
+    {
+        var body = await new StreamReader(req.Body).ReadToEndAsync();
+
+        using var client = SnsClientFactory.Create(
+            region: Environment.GetEnvironmentVariable("AWS_REGION"),
+            serviceUrl: Environment.GetEnvironmentVariable("SNS_SERVICE_URL"));
+
+        // Using builder for message attributes (enables subscriber filtering)
+        var request = new SnsMessageBuilder()
+            .WithTopicArn(Environment.GetEnvironmentVariable("SNS_TOPIC_ARN")!)
+            .WithMessage(body)
+            .WithSubject("New Order")
+            .WithAttribute("eventType", "OrderCreated")
+            .WithAttribute("priority", "high")
+            .Build();
+
+        var response = await client.PublishAsync(request);
+
+        var httpResponse = req.CreateResponse(HttpStatusCode.OK);
+        await httpResponse.WriteAsJsonAsync(new { messageId = response.MessageId });
+        return httpResponse;
+    }
+}
+```
+
+### S3 - Upload Objects
+
+```csharp
+using Amazon.S3;
+using Amazon.S3.Model;
+using Azure.Functions.Worker.Extensions.S3;
+using Microsoft.Azure.Functions.Worker;
+using Microsoft.Azure.Functions.Worker.Http;
+
+public class S3Functions
+{
+    [Function("UploadToS3")]
+    public async Task<HttpResponseData> Upload(
+        [HttpTrigger(AuthorizationLevel.Function, "post", Route = "upload/{filename}")] HttpRequestData req,
+        string filename)
+    {
+        using var client = S3ClientFactory.Create(
+            region: Environment.GetEnvironmentVariable("AWS_REGION"),
+            serviceUrl: Environment.GetEnvironmentVariable("S3_SERVICE_URL"));
+
+        var response = await client.PutObjectAsync(new PutObjectRequest
+        {
+            BucketName = Environment.GetEnvironmentVariable("S3_BUCKET_NAME"),
+            Key = $"uploads/{filename}",
+            InputStream = req.Body,
+            ContentType = req.Headers.TryGetValues("Content-Type", out var ct) ? ct.First() : "application/octet-stream"
+        });
+
+        var httpResponse = req.CreateResponse(HttpStatusCode.OK);
+        await httpResponse.WriteAsJsonAsync(new { etag = response.ETag });
+        return httpResponse;
+    }
+
+    /// <summary>
+    /// Process S3 events via SQS trigger (S3 -> SQS -> this function)
+    /// </summary>
+    [Function("ProcessS3Event")]
+    public void ProcessS3Event([SqsTrigger("%S3_EVENTS_QUEUE_URL%")] Message message)
+    {
+        var notification = S3EventNotification.Parse(message.Body);
+
+        foreach (var record in notification?.Records ?? [])
+        {
+            var bucketName = record.S3?.Bucket?.Name;
+            var objectKey = record.S3?.Object?.Key;
+            Console.WriteLine($"S3 Event: {record.EventName} - {bucketName}/{objectKey}");
+        }
+    }
+}
+```
+
+### Kinesis - Send Records
+
+```csharp
+using Azure.Functions.Worker.Extensions.Kinesis;
+using Microsoft.Azure.Functions.Worker;
+using Microsoft.Azure.Functions.Worker.Http;
+using Microsoft.Extensions.Logging;
+
+public class KinesisFunctions
+{
+    private readonly ILogger<KinesisFunctions> _logger;
+
+    public KinesisFunctions(ILogger<KinesisFunctions> logger) => _logger = logger;
+
+    [Function("SendToKinesis")]
+    public async Task<HttpResponseData> SendRecord(
+        [HttpTrigger(AuthorizationLevel.Function, "post")] HttpRequestData req)
+    {
+        var body = await new StreamReader(req.Body).ReadToEndAsync();
+
+        using var client = KinesisClientFactory.Create(
+            region: Environment.GetEnvironmentVariable("AWS_REGION"),
+            serviceUrl: Environment.GetEnvironmentVariable("KINESIS_SERVICE_URL"));
+
+        // Use entity ID as partition key for ordered processing
+        var record = new KinesisRecordBuilder()
+            .WithPartitionKey(Guid.NewGuid().ToString())
+            .WithData(body)
+            .Build();
+
+        var response = await client.PutRecordsAsync(new Amazon.Kinesis.Model.PutRecordsRequest
+        {
+            StreamName = Environment.GetEnvironmentVariable("KINESIS_STREAM_NAME"),
+            Records = new List<Amazon.Kinesis.Model.PutRecordsRequestEntry> { record }
+        });
+
+        var httpResponse = req.CreateResponse(HttpStatusCode.OK);
+        await httpResponse.WriteAsJsonAsync(new { failedCount = response.FailedRecordCount });
+        return httpResponse;
+    }
+
+    [Function("SendBatchToKinesis")]
+    public async Task<HttpResponseData> SendBatch(
+        [HttpTrigger(AuthorizationLevel.Function, "post")] HttpRequestData req)
+    {
+        using var client = KinesisClientFactory.Create();
+
+        // KinesisBatchWriter handles 500-record limit automatically
+        await using var writer = new KinesisBatchWriter(
+            client,
+            Environment.GetEnvironmentVariable("KINESIS_STREAM_NAME")!,
+            _logger);
+
+        for (int i = 0; i < 1000; i++)
+        {
+            await writer.AddAsync(new KinesisRecordBuilder()
+                .WithRandomPartitionKey()
+                .WithJsonData(new { index = i, timestamp = DateTime.UtcNow })
+                .Build());
+        }
+
+        var httpResponse = req.CreateResponse(HttpStatusCode.OK);
+        await httpResponse.WriteAsJsonAsync(new { status = "batch_sent", count = 1000 });
+        return httpResponse;
+    }
+}
+```
 
 ## Configuration
 

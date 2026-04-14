@@ -9,13 +9,21 @@
   </PropertyGroup>
   
   <ItemGroup>
-    <PackageReference Include="AWSSDK.SQS" Version="3.7.0" />
+    <PackageReference Include="AWSSDK.SQS" Version="3.7.400" />
+    <PackageReference Include="AWSSDK.SimpleNotificationService" Version="3.7.400" />
+    <PackageReference Include="AWSSDK.EventBridge" Version="3.7.401" />
+    <PackageReference Include="AWSSDK.S3" Version="3.7.400" />
+    <PackageReference Include="AWSSDK.Kinesis" Version="3.7.400" />
     <PackageReference Include="Microsoft.Azure.WebJobs.Extensions" Version="5.0.0" />
     <PackageReference Include="Microsoft.NET.Sdk.Functions" Version="4.4.1" />
   </ItemGroup>
   
   <ItemGroup>
     <ProjectReference Include="..\..\src\Azure.WebJobs.Extensions.SQS\Azure.WebJobs.Extensions.SQS.csproj" />
+    <ProjectReference Include="..\..\src\Azure.WebJobs.Extensions.SNS\Azure.WebJobs.Extensions.SNS.csproj" />
+    <ProjectReference Include="..\..\src\Azure.WebJobs.Extensions.EventBridge\Azure.WebJobs.Extensions.EventBridge.csproj" />
+    <ProjectReference Include="..\..\src\Azure.WebJobs.Extensions.S3\Azure.WebJobs.Extensions.S3.csproj" />
+    <ProjectReference Include="..\..\src\Azure.WebJobs.Extensions.Kinesis\Azure.WebJobs.Extensions.Kinesis.csproj" />
   </ItemGroup>
   
   <ItemGroup>
