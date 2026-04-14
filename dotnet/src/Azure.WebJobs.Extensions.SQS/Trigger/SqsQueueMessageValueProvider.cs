@@ -2,6 +2,7 @@
 namespace Azure.WebJobs.Extensions.SQS;
 
 using System;
+using System.Collections.Generic;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
@@ -11,16 +12,10 @@ using Microsoft.Azure.WebJobs.Host.Bindings;
 
 public class SqsQueueMessageValueProvider : IValueProvider
 {
+    internal const string BindingDataSource = "AWSSQS";
+    internal const string BindingDataVersion = "1.0";
+    internal const string JsonContentType = "application/json";
     private const string IsolatedWorkerRuntime = "dotnet-isolated";
-    private const string BindingDataSource = "AWSSQS";
-    private const string BindingDataVersion = "1.0";
-    private const string JsonContentType = "application/json";
-
-    private static readonly bool IsIsolatedWorker =
-        string.Equals(
-            Environment.GetEnvironmentVariable("FUNCTIONS_WORKER_RUNTIME"),
-            IsolatedWorkerRuntime,
-            StringComparison.OrdinalIgnoreCase);
 
     private static readonly JsonSerializerOptions SerializerOptions = new()
     {
@@ -28,17 +23,24 @@ public class SqsQueueMessageValueProvider : IValueProvider
     };
 
     private readonly object _value;
+    private readonly bool _isIsolatedWorker;
 
-    public Type Type => IsIsolatedWorker ? typeof(ParameterBindingData) : typeof(Message);
+    public Type Type => _isIsolatedWorker ? typeof(ParameterBindingData) : typeof(Message);
 
     public SqsQueueMessageValueProvider(object value)
+        : this(value, IsRunningInIsolatedWorker())
+    {
+    }
+
+    internal SqsQueueMessageValueProvider(object value, bool isIsolatedWorker)
     {
         _value = value ?? throw new ArgumentNullException(nameof(value));
+        _isIsolatedWorker = isIsolatedWorker;
     }
 
     public Task<object> GetValueAsync()
     {
-        if (IsIsolatedWorker && _value is Message message)
+        if (_isIsolatedWorker && _value is Message message)
         {
             var payload = SerializeMessage(message);
             var bindingData = new ParameterBindingData(
@@ -57,7 +59,15 @@ public class SqsQueueMessageValueProvider : IValueProvider
         return _value.ToString() ?? string.Empty;
     }
 
-    private static string SerializeMessage(Message message)
+    private static bool IsRunningInIsolatedWorker()
+    {
+        return string.Equals(
+            Environment.GetEnvironmentVariable("FUNCTIONS_WORKER_RUNTIME"),
+            IsolatedWorkerRuntime,
+            StringComparison.OrdinalIgnoreCase);
+    }
+
+    internal static string SerializeMessage(Message message)
     {
         var data = new SqsMessageData
         {
@@ -71,7 +81,7 @@ public class SqsQueueMessageValueProvider : IValueProvider
 
         if (message.MessageAttributes is { Count: > 0 })
         {
-            data.MessageAttributes = new();
+            data.MessageAttributes = new Dictionary<string, SqsMessageAttributeData>();
             foreach (var kvp in message.MessageAttributes)
             {
                 data.MessageAttributes[kvp.Key] = new SqsMessageAttributeData
@@ -86,18 +96,18 @@ public class SqsQueueMessageValueProvider : IValueProvider
         return JsonSerializer.Serialize(data, SerializerOptions);
     }
 
-    private sealed class SqsMessageData
+    internal sealed class SqsMessageData
     {
         public string? MessageId { get; set; }
         public string? ReceiptHandle { get; set; }
         public string? Body { get; set; }
         public string? MD5OfBody { get; set; }
-        public System.Collections.Generic.Dictionary<string, string>? Attributes { get; set; }
-        public System.Collections.Generic.Dictionary<string, SqsMessageAttributeData>? MessageAttributes { get; set; }
+        public Dictionary<string, string>? Attributes { get; set; }
+        public Dictionary<string, SqsMessageAttributeData>? MessageAttributes { get; set; }
         public string? MD5OfMessageAttributes { get; set; }
     }
 
-    private sealed class SqsMessageAttributeData
+    internal sealed class SqsMessageAttributeData
     {
         public string? DataType { get; set; }
         public string? StringValue { get; set; }
