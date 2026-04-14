@@ -11,9 +11,9 @@ This project follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) an
 ### 1.1.1 — 2026-04-14
 
 #### Fixed
-- Worker package README on NuGet referenced the old `[SqsTrigger]` attribute name throughout (trigger examples, attribute docs, migration snippets) — would not compile against the 1.1.0 package which renamed it to `[SqsQueueTrigger]`. Updated all `[SqsTrigger]` usages to `[SqsQueueTrigger]`.
-- Stale `Version="1.0.0"` install snippet in the Worker package README updated to current version.
-- WebJobs package README on NuGet still showed pre-1.1.0 framing ("In-Process (WebJobs) hosting model"); now aligned with the host-side / worker-side framing introduced post-release in #82.
+- Worker package README on NuGet referenced the old `[SqsTrigger]` attribute name throughout (trigger examples, attribute docs, migration snippets) — would not compile against the 1.1.0 package which renamed it to `[SqsQueueTrigger]`. Updated all `[SqsTrigger]` usages to `[SqsQueueTrigger]` ([#83](https://github.com/laveeshb/azure-functions-sqs-extension/pull/83)).
+- Stale `Version="1.0.0"` install snippet in the Worker package README updated to current version ([#83](https://github.com/laveeshb/azure-functions-sqs-extension/pull/83)).
+- WebJobs package README on NuGet still showed pre-1.1.0 framing ("In-Process (WebJobs) hosting model"); now aligned with the host-side / worker-side framing ([#82](https://github.com/laveeshb/azure-functions-sqs-extension/pull/82), [#83](https://github.com/laveeshb/azure-functions-sqs-extension/pull/83)).
 
 ### 1.1.0 — 2026-04-14
 
