@@ -8,12 +8,12 @@ on:
         required: true
         type: string
       publish-inprocess:
-        description: 'Publish In-Process package (Extensions.Azure.WebJobs.SQS)'
+        description: 'Publish host-side package (Extensions.Azure.WebJobs.SQS)'
         required: true
         type: boolean
         default: true
       publish-isolated:
-        description: 'Publish Isolated Worker package (Extensions.Azure.Functions.Worker.SQS)'
+        description: 'Publish worker-side package (Extensions.Azure.Functions.Worker.SQS)'
         required: true
         type: boolean
         default: true

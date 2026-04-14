@@ -16,12 +16,12 @@ dotnet/
 
 ## Packages
 
-This extension provides two separate packages following Microsoft's pattern for Azure Functions:
+This extension provides two separate packages following Microsoft's pattern for Azure Functions. The WebJobs package is the host-side runtime extension (referenced transitively by the Worker package); the Worker package is the worker-side attributes and converters.
 
-| Package | Hosting Model | NuGet | Documentation |
-|---------|---------------|-------|---------------|
-| **Extensions.Azure.WebJobs.SQS** | In-process | Coming soon | [README](./src/Azure.WebJobs.Extensions.SQS/README.md) |
-| **Extensions.Azure.Functions.Worker.SQS** | Isolated worker | Coming soon | [README](./src/Azure.Functions.Worker.Extensions.SQS/README.md) |
+| Package | Role | Install directly for | NuGet | Documentation |
+|---------|------|----------------------|-------|---------------|
+| **Extensions.Azure.WebJobs.SQS** | Host-side extension | In-process model | Coming soon | [README](./src/Azure.WebJobs.Extensions.SQS/README.md) |
+| **Extensions.Azure.Functions.Worker.SQS** | Worker-side extension | Isolated worker model | Coming soon | [README](./src/Azure.Functions.Worker.Extensions.SQS/README.md) |
 
 ## Installation
 

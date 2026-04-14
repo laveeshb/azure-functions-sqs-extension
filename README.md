@@ -22,8 +22,8 @@ This repository provides Azure Functions extensions to integrate with [Amazon SQ
 
 For .NET developers, this extension provides two packages supporting both hosting models:
 
-- **[Azure.WebJobs.Extensions.SQS](./dotnet/src/Azure.WebJobs.Extensions.SQS/README.md)** - In-process hosting model
-- **[Azure.Functions.Worker.Extensions.SQS](./dotnet/src/Azure.Functions.Worker.Extensions.SQS/README.md)** - Isolated worker (out-of-process) model
+- **[Azure.WebJobs.Extensions.SQS](./dotnet/src/Azure.WebJobs.Extensions.SQS/README.md)** - Host-side extension. Install directly for the in-process model; isolated worker apps pick it up transitively.
+- **[Azure.Functions.Worker.Extensions.SQS](./dotnet/src/Azure.Functions.Worker.Extensions.SQS/README.md)** - Worker-side extension. Install for the isolated worker (out-of-process) model.
 
 **Features:**
 - ⚡ Trigger Azure Functions from SQS queue messages

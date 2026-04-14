@@ -10,7 +10,7 @@
     <Authors>Laveesh Bansal</Authors>
     <Company />
     <Product>Azure WebJobs SQS Extension</Product>
-    <Description>Amazon SQS extension for Azure Functions using the in-process hosting model.</Description>
+    <Description>Host-side Amazon SQS extension for the Azure Functions runtime. Referenced directly by in-process apps and transitively by the isolated worker package (Extensions.Azure.Functions.Worker.SQS), since the Functions host process listens to SQS in both hosting models.</Description>
     <RepositoryType>Github</RepositoryType>
     <AssemblyName>Azure.WebJobs.Extensions.SQS</AssemblyName>
     <RootNamespace>Azure.WebJobs.Extensions.SQS</RootNamespace>
