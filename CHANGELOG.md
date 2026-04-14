@@ -8,7 +8,7 @@ This project follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) an
 
 ## .NET
 
-### 1.1.0 — Unreleased
+### 1.1.0 — 2026-04-14
 
 #### Fixed
 - Isolated worker model now functions end-to-end. Previously, the isolated worker SQS trigger failed at startup and later at runtime due to:
