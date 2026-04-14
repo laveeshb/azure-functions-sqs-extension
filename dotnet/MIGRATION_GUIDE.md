@@ -163,7 +163,7 @@ public void Run(
 // NEW (Isolated Worker)
 [Function("ProcessMessage")]
 public void Run(
-    [SqsTrigger(QueueUrl = "%SQS_QUEUE_URL%")] Message message,
+    [SqsQueueTrigger("%SQS_QUEUE_URL%")] Message message,
     FunctionContext context)
 {
     var logger = context.GetLogger("ProcessMessage");
@@ -255,7 +255,7 @@ Follow the same steps as **Scenario 2**, but:
 | Feature | In-Process | Isolated Worker |
 |---------|------------|-----------------|
 | **Package** | Extensions.Azure.WebJobs.SQS | Extensions.Azure.Functions.Worker.SQS |
-| **Trigger Attribute** | `[SqsQueueTrigger]` | `[SqsTrigger]` |
+| **Trigger Attribute** | `[SqsQueueTrigger]` | `[SqsQueueTrigger]` |
 | **Output Attribute** | `[SqsQueueOut]` with `out` parameter | Use `IAmazonSQS` directly |
 | **Function Attribute** | `[FunctionName]` | `[Function]` |
 | **Logging** | `ILogger` parameter | `FunctionContext.GetLogger()` |
@@ -305,7 +305,7 @@ Check your function logs and output queue for sent messages.
 
 **Solution:**
 - In-process: Use `[SqsQueueTrigger]` and `[SqsQueueOut]`
-- Isolated worker: Use `[SqsTrigger]`, no output attribute (use `IAmazonSQS`)
+- Isolated worker: Use `[SqsQueueTrigger]`, no output attribute (use `IAmazonSQS`)
 
 ### Issue: DI not working in isolated worker
 

@@ -70,7 +70,7 @@ This test application demonstrates the **In-Process (WebJobs)** hosting model fo
 
 | Feature | In-Process (This App) | Isolated Worker |
 |---------|----------------------|-----------------|
-| Trigger Attribute | `SqsQueueTriggerAttribute` | `SqsTriggerAttribute` |
+| Trigger Attribute | `SqsQueueTriggerAttribute` | `SqsQueueTriggerAttribute` |
 | Output Attribute | `SqsQueueOutAttribute` | `SqsOutputAttribute` |
 | Output Pattern | `IAsyncCollector<T>` | Return values |
 | Runtime | In same process as host | Separate process |
