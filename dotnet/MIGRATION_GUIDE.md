@@ -2,7 +2,7 @@
 
 This guide helps you migrate between different versions of the Azure Functions SQS Extension.
 
-## Current State (v1.0.0)
+## Current State
 
 The Azure Functions SQS Extension provides **two separate packages**, following Microsoft's pattern for Azure Functions bindings:
 
@@ -34,7 +34,7 @@ Migrating from `AzureFunctions.Extension.SQS` (v2.x/v3.x) to `Extensions.Azure.W
 <PackageReference Include="AzureFunctions.Extension.SQS" Version="3.0.0" />
 
 <!-- Add new package -->
-<PackageReference Include="Extensions.Azure.WebJobs.SQS" Version="1.0.0" />
+<PackageReference Include="Extensions.Azure.WebJobs.SQS" Version="1.1.1" />
 ```
 
 #### 2. Update Namespace
@@ -105,7 +105,7 @@ Migrating from `AzureFunctions.Extension.SQS` to `Extensions.Azure.Functions.Wor
 <PackageReference Include="Microsoft.NET.Sdk.Functions" Version="4.x.x" />
 
 <!-- Add isolated worker packages -->
-<PackageReference Include="Extensions.Azure.Functions.Worker.SQS" Version="1.0.0" />
+<PackageReference Include="Extensions.Azure.Functions.Worker.SQS" Version="1.1.1" />
 <PackageReference Include="Microsoft.Azure.Functions.Worker" Version="1.23.0" />
 <PackageReference Include="Microsoft.Azure.Functions.Worker.Sdk" Version="1.18.1" />
 ```
@@ -315,16 +315,14 @@ Check your function logs and output queue for sent messages.
   services.AddSingleton<IAmazonSQS>(sp => new AmazonSQSClient());
   ```
 
-## Timeline Recommendations
+## Timeline
 
-- **2024-2025**: Migrate to isolated worker model for new projects
-- **By Q4 2025**: Plan migration for existing in-process apps
-- **By November 10, 2026**: Complete migration before Microsoft ends Azure Functions platform support for in-process model ([official timeline](https://aka.ms/azure-functions-retirements/in-process-model))
+- **November 10, 2026**: Microsoft ends Azure Functions platform support for the in-process hosting model ([official timeline](https://aka.ms/azure-functions-retirements/in-process-model)). Plan and complete your migration to the isolated worker model before this date.
 
 ## Resources
 
-- [In-Process Package README](./src/Azure.WebJobs.Extensions.SQS/README.md)
-- [Isolated Worker Package README](./src/Azure.Functions.Worker.Extensions.SQS/README.md)
+- [Host-side Package README (Extensions.Azure.WebJobs.SQS)](./src/Azure.WebJobs.Extensions.SQS/README.md)
+- [Worker-side Package README (Extensions.Azure.Functions.Worker.SQS)](./src/Azure.Functions.Worker.Extensions.SQS/README.md)
 - [Azure Functions Isolated Worker Guide](https://learn.microsoft.com/azure/azure-functions/dotnet-isolated-process-guide)
 - [Migrate to Isolated Worker (Microsoft Docs)](https://learn.microsoft.com/azure/azure-functions/migrate-dotnet-to-isolated-model)
 
