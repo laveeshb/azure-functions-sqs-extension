@@ -261,6 +261,34 @@ Same security posture as option 3 (a long-lived AWS secret lives in your Azure c
 
 ---
 
+## Storing secrets in Azure Key Vault
+
+For options 2, 3, and 4 — anywhere a secret would otherwise sit in a Function App setting in plaintext — back the setting with a Key Vault reference instead. The Azure Functions runtime resolves `@Microsoft.KeyVault(SecretUri=...)` at app startup, so the literal secret never appears in your config blade and the extension only sees the resolved value. (Option 1 has no secret to store, so this section doesn't apply.)
+
+### How
+
+For each secret app setting, set the value to a Key Vault reference:
+
+```
+@Microsoft.KeyVault(SecretUri=https://my-vault.vault.azure.net/secrets/<name>/)
+```
+
+Per option:
+
+- **Option 2 (Entra client secret)** — already shown in the section 2 example. The `EntraClientSecret` attribute reads a Key Vault-backed app setting.
+- **Option 3 (AWS credential chain)** — set the `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` app settings as Key Vault references. The AWS SDK reads the resolved env vars.
+- **Option 4 (explicit keys on attribute)** — same as option 3, but the attribute uses `%AWS_SECRET_ACCESS_KEY%` interpolation to reach the resolved env var.
+
+### Prerequisite
+
+The Function App's managed identity needs read access to the vault — assign the `Key Vault Secrets User` role (RBAC) or an access policy with `get` on secrets.
+
+### Caveat: rotation
+
+Key Vault references resolve at app startup, not per request. Rotations take effect on restart. The Functions runtime also refreshes references periodically (every ~24h on supported plans), but for short-rotation secrets you'd need custom `SecretClient` code in the function body — outside what the binding mechanism handles. Option 1 sidesteps this entirely: short-lived STS credentials are refreshed automatically by the extension, no app restart required.
+
+---
+
 ## All federation knobs
 
 | Property | Default | Description |
