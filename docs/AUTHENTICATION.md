@@ -6,15 +6,60 @@ The SQS extension supports three ways for an Azure Function to authenticate to A
 |---|---------|------------------------|--------------------------|------------------|
 | 1 | **Entra ID federation via Managed Identity** | ✅ Yes | ✅ Yes | **Production. This is the recommended option.** |
 | 2 | Entra ID federation via App Registration (client secret) | ✅ Yes | ⚠️ No — Entra client secret required | When managed identity isn't available (e.g. some local dev setups) |
-| 3 | AWS access key + secret on the binding attribute | ❌ No — long-lived AWS key | ❌ No — long-lived AWS key in Azure | Backwards compatibility only |
+| 3 | AWS default credential chain (env vars / shared credentials file) | ❌ No — long-lived AWS key | ❌ No — long-lived AWS key in env vars | Existing deployments where the AWS key already lives in app settings / Key Vault |
+| 4 | AWS access key + secret on the binding attribute | ❌ No — long-lived AWS key | ❌ No — long-lived AWS key in Azure | Backwards compatibility only |
 
-The extension picks federation (option 1 or 2) when `AwsRoleArn` is set on the trigger or output binding. If `AwsRoleArn` is unset, it falls back to the AWS default credential chain (env vars, etc.) and finally to explicit keys if provided. Federation always wins when configured.
+The extension picks credentials in this priority order:
+
+1. **Federation (option 1 or 2)** when `AwsRoleArn` is set on the binding attribute.
+2. **Explicit keys (option 4)** when both `AWSKeyId` and `AWSAccessKey` are set on the attribute.
+3. **AWS default credential chain (option 3)** otherwise — the AWS SDK looks up `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` env vars, the shared credentials file, etc.
+
+Federation always wins when configured.
 
 ---
 
 ## 1. Managed Identity → AWS (recommended, password-less)
 
 No secret lives anywhere in your Azure configuration. The Function App's managed identity gets an Entra ID token, which AWS STS exchanges for short-lived AWS credentials (default 1 hour, refreshed automatically).
+
+### How it works
+
+```
+┌────────────────────────────────────────────────────────────┐
+│  Azure Function App (managed identity enabled)             │
+└──────────────────────────┬─────────────────────────────────┘
+                           │  (1) DefaultAzureCredential.GetTokenAsync
+                           │      audience = api://AWSSecurityTokenService
+                           ▼
+┌────────────────────────────────────────────────────────────┐
+│  Entra ID                                                  │
+│  - issues a JWT signed with the tenant key                 │
+│  - sub = managed identity object ID                        │
+│  - aud = api://AWSSecurityTokenService                     │
+└──────────────────────────┬─────────────────────────────────┘
+                           │  (2) Entra JWT
+                           ▼
+┌────────────────────────────────────────────────────────────┐
+│  AWS STS — AssumeRoleWithWebIdentity                       │
+│  - validates JWT signature via the IAM OIDC provider       │
+│  - checks trust policy: aud + sub + issuer must match      │
+│  - returns temporary credentials (1h default, refreshed)   │
+└──────────────────────────┬─────────────────────────────────┘
+                           │  (3) AccessKey + Secret + SessionToken
+                           ▼
+┌────────────────────────────────────────────────────────────┐
+│  AmazonSQSClient (inside the Function App)                 │
+│  - signs SQS calls with the temporary credentials          │
+│  - the EntraIdFederatedCredentials class auto-refreshes    │
+│    the token before expiry, so step (1)–(3) repeats        │
+└──────────────────────────┬─────────────────────────────────┘
+                           │  (4) ReceiveMessage / SendMessage / DeleteMessage
+                           ▼
+┌────────────────────────────────────────────────────────────┐
+│  AWS SQS                                                   │
+└────────────────────────────────────────────────────────────┘
+```
 
 ### One-time AWS setup
 
@@ -74,6 +119,36 @@ Same federation flow as option 1, but the Entra token is obtained using an Entra
 
 When to choose this over option 1: usually only when managed identity isn't an option (some local dev scenarios; environments where you need a single identity that works across hosts).
 
+### How it works
+
+```
+┌────────────────────────────────────────────────────────────┐
+│  Azure Function App                                        │
+│  settings: EntraTenantId, EntraClientId,                   │
+│            EntraClientSecret  (Key Vault reference)        │
+└──────────────────────────┬─────────────────────────────────┘
+                           │  (1) ClientSecretCredential.GetTokenAsync
+                           │      using tenant + client id + client secret
+                           ▼
+┌────────────────────────────────────────────────────────────┐
+│  Entra ID (token endpoint)                                 │
+│  - validates client_secret against the app registration    │
+│  - issues a JWT signed with the tenant key                 │
+│  - sub = app registration object ID                        │
+│  - aud = api://AWSSecurityTokenService                     │
+└──────────────────────────┬─────────────────────────────────┘
+                           │  (2) Entra JWT
+                           ▼
+       (steps 3–5 are identical to option 1: AWS STS validates
+        the JWT, returns temporary AWS credentials, the SQS
+        client signs API calls with them)
+
+                           ▼
+┌────────────────────────────────────────────────────────────┐
+│  AWS SQS                                                   │
+└────────────────────────────────────────────────────────────┘
+```
+
 ### AWS setup
 
 Same as option 1, but the trust policy's `sub` condition uses the app registration's object ID (or the federated subject your IdP issues).
@@ -99,9 +174,75 @@ public void Run(
 
 ---
 
-## 3. AWS access key + secret (legacy)
+## 3. AWS default credential chain
+
+Leave the AWS-specific attribute properties unset and let the AWS SDK's default credential provider chain locate credentials. On Azure (no EC2/ECS/EKS infrastructure), the practical pickup paths are:
+
+- Environment variables: `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, optional `AWS_SESSION_TOKEN`
+- A shared credentials file (`~/.aws/credentials`) mounted into the Function App
+
+Set those env vars as Function App settings (Key Vault references recommended for the secret).
+
+### How it works
+
+```
+┌────────────────────────────────────────────────────────────┐
+│  Azure Function App                                        │
+│  env: AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY             │
+│       (Key Vault reference recommended for the secret)     │
+└──────────────────────────┬─────────────────────────────────┘
+                           │  (1) AWS SDK default credential chain
+                           │      walks env vars / shared file
+                           ▼
+┌────────────────────────────────────────────────────────────┐
+│  AmazonSQSClient                                           │
+│  - signs SQS calls with the long-lived credentials         │
+└──────────────────────────┬─────────────────────────────────┘
+                           │  (2) ReceiveMessage / SendMessage
+                           ▼
+┌────────────────────────────────────────────────────────────┐
+│  AWS SQS                                                   │
+└────────────────────────────────────────────────────────────┘
+```
+
+```csharp
+public void Run(
+    [SqsQueueTrigger(QueueUrl = "%SQS_QUEUE_URL%")]
+    Message message,
+    ILogger logger)
+{
+    // ...
+}
+```
+
+The AWS secret still lives in Azure (just in env vars rather than the binding attribute). The advantage over option 4 is that you can rotate the key by editing app settings without redeploying code, and standard AWS tooling (CLI, SDKs, samples) "just works" in the same environment.
+
+## 4. AWS access key + secret on the attribute (legacy)
 
 Long-lived AWS credentials passed directly to the binding attribute. **Avoid for new code.** Kept for backwards compatibility with existing deployments.
+
+### How it works
+
+```
+┌────────────────────────────────────────────────────────────┐
+│  Azure Function App                                        │
+│  binding attribute: AWSKeyId = "%AWS_ACCESS_KEY_ID%"       │
+│                     AWSAccessKey = "%AWS_SECRET_ACCESS_KEY%"│
+│  app settings:      AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY│
+└──────────────────────────┬─────────────────────────────────┘
+                           │  (1) %VAR% interpolation reads env vars
+                           │      into the attribute at startup
+                           ▼
+┌────────────────────────────────────────────────────────────┐
+│  AmazonSQSClient                                           │
+│  - constructed with BasicAWSCredentials(key, secret)       │
+└──────────────────────────┬─────────────────────────────────┘
+                           │  (2) ReceiveMessage / SendMessage
+                           ▼
+┌────────────────────────────────────────────────────────────┐
+│  AWS SQS                                                   │
+└────────────────────────────────────────────────────────────┘
+```
 
 ```csharp
 public void Run(
@@ -116,9 +257,7 @@ public void Run(
 }
 ```
 
-Or omit the attribute properties entirely and let the AWS SDK's default credential chain pick up `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` from environment variables.
-
-Either way, a long-lived AWS secret lives in your Azure configuration. Rotate it on a regular cadence, and migrate to option 1 when you can.
+Same security posture as option 3 (a long-lived AWS secret lives in your Azure configuration). Rotate it on a regular cadence, and migrate to option 1 when you can.
 
 ---
 
