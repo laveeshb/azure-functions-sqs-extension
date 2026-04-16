@@ -2,11 +2,11 @@
 
 The SQS extension supports three ways for an Azure Function to authenticate to AWS. They are listed below in order of recommendation.
 
-| # | Pattern | Stores AWS secret? | Stores any secret in Azure? | Recommended for |
-|---|---------|--------------------|------------------------------|------------------|
-| 1 | **Entra ID federation via Managed Identity** | ❌ No | ❌ No | **Production. This is the recommended option.** |
-| 2 | Entra ID federation via App Registration (client secret) | ❌ No | ⚠️ Entra client secret only | When managed identity isn't available (e.g. some local dev setups) |
-| 3 | AWS access key + secret on the binding attribute | ⚠️ Yes (long-lived) | ⚠️ Yes (long-lived AWS key) | Backwards compatibility only |
+| # | Pattern | Password-less for AWS? | Password-less in Azure? | Recommended for |
+|---|---------|------------------------|--------------------------|------------------|
+| 1 | **Entra ID federation via Managed Identity** | ✅ Yes | ✅ Yes | **Production. This is the recommended option.** |
+| 2 | Entra ID federation via App Registration (client secret) | ✅ Yes | ⚠️ No — Entra client secret required | When managed identity isn't available (e.g. some local dev setups) |
+| 3 | AWS access key + secret on the binding attribute | ❌ No — long-lived AWS key | ❌ No — long-lived AWS key in Azure | Backwards compatibility only |
 
 The extension picks federation (option 1 or 2) when `AwsRoleArn` is set on the trigger or output binding. If `AwsRoleArn` is unset, it falls back to the AWS default credential chain (env vars, etc.) and finally to explicit keys if provided. Federation always wins when configured.
 
