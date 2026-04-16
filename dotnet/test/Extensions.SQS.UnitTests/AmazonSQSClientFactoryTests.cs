@@ -218,6 +218,131 @@ public class AmazonSQSClientFactoryTests
 
     #endregion
 
+    #region Entra ID Federation Tests
+
+    [Fact]
+    public void Build_WithAwsRoleArn_CreatesClient()
+    {
+        var attribute = new SqsQueueTriggerAttribute
+        {
+            QueueUrl = ValidQueueUrl,
+            AwsRoleArn = "arn:aws:iam::123456789012:role/my-role",
+        };
+
+        using var client = AmazonSQSClientFactory.Build(attribute);
+
+        client.Should().NotBeNull();
+        client.Config.RegionEndpoint.SystemName.Should().Be("us-east-1");
+    }
+
+    [Fact]
+    public void Build_WithAwsRoleArn_TakesPrecedenceOverExplicitKeys()
+    {
+        // Both federation config and explicit keys provided; federation should win.
+        // We can't directly inspect the credentials provider attached to the client
+        // without internal SDK access, but at minimum the call must succeed without
+        // touching either credential source (no STS call happens until the client
+        // first sends a request).
+        var attribute = new SqsQueueTriggerAttribute
+        {
+            QueueUrl = ValidQueueUrl,
+            AWSKeyId = "AKIAIOSFODNN7EXAMPLE",
+            AWSAccessKey = "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+            AwsRoleArn = "arn:aws:iam::123456789012:role/my-role",
+        };
+
+        using var client = AmazonSQSClientFactory.Build(attribute);
+
+        client.Should().NotBeNull();
+    }
+
+    [Fact]
+    public void Build_WithAwsRoleArn_OnOutAttribute_CreatesClient()
+    {
+        var attribute = new SqsQueueOutAttribute
+        {
+            QueueUrl = ValidQueueUrl,
+            AwsRoleArn = "arn:aws:iam::123456789012:role/my-role",
+        };
+
+        using var client = AmazonSQSClientFactory.Build(attribute);
+
+        client.Should().NotBeNull();
+        client.Config.RegionEndpoint.SystemName.Should().Be("us-east-1");
+    }
+
+    [Fact]
+    public void Build_WithEmptyAwsRoleArn_FallsBackToCredentialChain()
+    {
+        var attribute = new SqsQueueTriggerAttribute
+        {
+            QueueUrl = ValidQueueUrl,
+            AwsRoleArn = "",
+        };
+
+        using var client = AmazonSQSClientFactory.Build(attribute);
+
+        client.Should().NotBeNull();
+    }
+
+    [Fact]
+    public void BuildEntraCredential_WithAllAppRegFields_ReturnsClientSecretCredential()
+    {
+        var credential = AmazonSQSClientFactory.BuildEntraCredential(
+            entraTenantId: "11111111-1111-1111-1111-111111111111",
+            entraClientId: "22222222-2222-2222-2222-222222222222",
+            entraClientSecret: "fake-secret-value");
+
+        credential.Should().BeOfType<global::Azure.Identity.ClientSecretCredential>();
+    }
+
+    [Fact]
+    public void BuildEntraCredential_WithNoAppRegFields_ReturnsDefaultAzureCredential()
+    {
+        var credential = AmazonSQSClientFactory.BuildEntraCredential(
+            entraTenantId: null,
+            entraClientId: null,
+            entraClientSecret: null);
+
+        credential.Should().BeOfType<global::Azure.Identity.DefaultAzureCredential>();
+    }
+
+    [Theory]
+    [InlineData(null, "client-id", "secret")]
+    [InlineData("tenant-id", null, "secret")]
+    [InlineData("tenant-id", "client-id", null)]
+    [InlineData("", "client-id", "secret")]
+    [InlineData("tenant-id", "", "secret")]
+    [InlineData("tenant-id", "client-id", "")]
+    public void BuildEntraCredential_WithPartialAppRegFields_ReturnsDefaultAzureCredential(
+        string? tenantId, string? clientId, string? clientSecret)
+    {
+        // Partial app-reg config falls back to DefaultAzureCredential rather than failing —
+        // this lets users override one field via env var without redeclaring all three.
+        var credential = AmazonSQSClientFactory.BuildEntraCredential(tenantId, clientId, clientSecret);
+
+        credential.Should().BeOfType<global::Azure.Identity.DefaultAzureCredential>();
+    }
+
+    [Fact]
+    public void Build_WithAwsRoleArn_AndAppRegFields_CreatesClient()
+    {
+        var attribute = new SqsQueueTriggerAttribute
+        {
+            QueueUrl = ValidQueueUrl,
+            AwsRoleArn = "arn:aws:iam::123456789012:role/my-role",
+            EntraTenantId = "11111111-1111-1111-1111-111111111111",
+            EntraClientId = "22222222-2222-2222-2222-222222222222",
+            EntraClientSecret = "fake-secret-value",
+        };
+
+        using var client = AmazonSQSClientFactory.Build(attribute);
+
+        client.Should().NotBeNull();
+    }
+
+    #endregion
+
     #region SqsQueueOutAttribute Tests
 
     [Fact]

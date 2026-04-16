@@ -1,4 +1,4 @@
-﻿
+
 namespace Azure.WebJobs.Extensions.SQS;
 
 using System;
@@ -6,6 +6,9 @@ using System.Linq;
 using Amazon;
 using Amazon.Runtime;
 using Amazon.SQS;
+using Azure.WebJobs.Extensions.SQS.Auth;
+using AzureCore = global::Azure.Core;
+using AzureIdentity = global::Azure.Identity;
 
 public class AmazonSQSClientFactory
 {
@@ -15,7 +18,14 @@ public class AmazonSQSClientFactory
             queueUrl: triggerParameters.QueueUrl,
             awsKeyId: triggerParameters.AWSKeyId,
             awsAccessKey: triggerParameters.AWSAccessKey,
-            regionOverride: triggerParameters.Region);
+            regionOverride: triggerParameters.Region,
+            awsRoleArn: triggerParameters.AwsRoleArn,
+            awsStsAudience: triggerParameters.AwsStsAudience,
+            awsRoleSessionName: triggerParameters.AwsRoleSessionName,
+            awsSessionDurationSeconds: triggerParameters.AwsSessionDurationSeconds,
+            entraTenantId: triggerParameters.EntraTenantId,
+            entraClientId: triggerParameters.EntraClientId,
+            entraClientSecret: triggerParameters.EntraClientSecret);
     }
 
     public static AmazonSQSClient Build(SqsQueueOutAttribute outParameters)
@@ -24,16 +34,50 @@ public class AmazonSQSClientFactory
             queueUrl: outParameters.QueueUrl,
             awsKeyId: outParameters.AWSKeyId,
             awsAccessKey: outParameters.AWSAccessKey,
-            regionOverride: outParameters.Region);
+            regionOverride: outParameters.Region,
+            awsRoleArn: outParameters.AwsRoleArn,
+            awsStsAudience: outParameters.AwsStsAudience,
+            awsRoleSessionName: outParameters.AwsRoleSessionName,
+            awsSessionDurationSeconds: outParameters.AwsSessionDurationSeconds,
+            entraTenantId: outParameters.EntraTenantId,
+            entraClientId: outParameters.EntraClientId,
+            entraClientSecret: outParameters.EntraClientSecret);
     }
 
-    private static AmazonSQSClient Build(string queueUrl, string? awsKeyId, string? awsAccessKey, string? regionOverride)
+    private static AmazonSQSClient Build(
+        string queueUrl,
+        string? awsKeyId,
+        string? awsAccessKey,
+        string? regionOverride,
+        string? awsRoleArn,
+        string awsStsAudience,
+        string awsRoleSessionName,
+        int awsSessionDurationSeconds,
+        string? entraTenantId,
+        string? entraClientId,
+        string? entraClientSecret)
     {
         // Extract region from queue URL
         var sqsRegion = ExtractRegionFromQueueUrl(queueUrl);
-        var region = !string.IsNullOrEmpty(regionOverride) 
+        var region = !string.IsNullOrEmpty(regionOverride)
             ? RegionEndpoint.GetBySystemName(regionOverride)
             : RegionEndpoint.EnumerableAllRegions.Single(r => r.SystemName.Equals(sqsRegion, StringComparison.OrdinalIgnoreCase));
+
+        // Entra ID federation takes precedence when a role ARN is provided.
+        // No long-lived AWS secret is stored — an Entra token is exchanged for
+        // temporary AWS credentials via STS AssumeRoleWithWebIdentity.
+        if (!string.IsNullOrEmpty(awsRoleArn))
+        {
+            var entraCredential = BuildEntraCredential(entraTenantId, entraClientId, entraClientSecret);
+            var federatedCredentials = new EntraIdFederatedCredentials(
+                roleArn: awsRoleArn!,
+                audience: awsStsAudience,
+                roleSessionName: awsRoleSessionName,
+                sessionDurationSeconds: awsSessionDurationSeconds,
+                stsRegion: region,
+                getEntraToken: entraCredential.GetTokenAsync);
+            return new AmazonSQSClient(federatedCredentials, region);
+        }
 
         // Use AWS credential chain if no explicit credentials provided
         // This supports: Environment variables, ECS container credentials, EC2 instance profile, etc.
@@ -47,12 +91,34 @@ public class AmazonSQSClientFactory
         return new AmazonSQSClient(credentials, region);
     }
 
+    /// <summary>
+    /// Selects the Entra credential used to obtain the federation token.
+    /// If all three app-registration fields are provided, uses ClientSecretCredential.
+    /// Otherwise falls back to DefaultAzureCredential, which picks up the Function App's
+    /// managed identity in production (the recommended, password-less option) and the
+    /// developer's Entra identity (e.g. via az login or Visual Studio) locally.
+    /// </summary>
+    internal static AzureCore.TokenCredential BuildEntraCredential(
+        string? entraTenantId,
+        string? entraClientId,
+        string? entraClientSecret)
+    {
+        if (!string.IsNullOrEmpty(entraTenantId)
+            && !string.IsNullOrEmpty(entraClientId)
+            && !string.IsNullOrEmpty(entraClientSecret))
+        {
+            return new AzureIdentity.ClientSecretCredential(entraTenantId, entraClientId, entraClientSecret);
+        }
+
+        return new AzureIdentity.DefaultAzureCredential();
+    }
+
     private static string ExtractRegionFromQueueUrl(string queueUrl)
     {
         // URL format: https://sqs.{region}.amazonaws.com/{account-id}/{queue-name}
         var uri = new Uri(queueUrl);
         var hostParts = uri.Host.Split('.');
-        
+
         if (hostParts.Length >= 3 && hostParts[0] == "sqs")
         {
             return hostParts[1];
