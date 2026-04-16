@@ -6,8 +6,8 @@ The SQS extension supports three ways for an Azure Function to authenticate to A
 |---|---------|------------------------|--------------------------|------------------|
 | 1 | **Entra ID federation via Managed Identity** | ✅ Yes | ✅ Yes | **Production. This is the recommended option.** |
 | 2 | Entra ID federation via App Registration (client secret) | ✅ Yes | ⚠️ No — Entra client secret required | When managed identity isn't available (e.g. some local dev setups) |
-| 3 | AWS default credential chain (env vars / shared credentials file) | ❌ No — long-lived AWS key | ❌ No — long-lived AWS key in env vars | Existing deployments where the AWS key already lives in app settings / Key Vault |
-| 4 | AWS access key + secret on the binding attribute | ❌ No — long-lived AWS key | ❌ No — long-lived AWS key in Azure | Backwards compatibility only |
+| 3 | AWS default credential chain (env vars / shared credentials file) | ⚠️ No — long-lived AWS key | ⚠️ No — long-lived AWS key in env vars | Existing deployments where the AWS key already lives in app settings / Key Vault |
+| 4 | AWS access key + secret on the binding attribute | ⚠️ No — long-lived AWS key | ⚠️ No — long-lived AWS key in Azure | Backwards compatibility only |
 
 The extension picks credentials in this priority order:
 
