@@ -29,11 +29,12 @@ For .NET developers, this extension provides two packages supporting both hostin
 - ⚡ Trigger Azure Functions from SQS queue messages
 - 📤 Send messages to SQS queues from Azure Functions
 - 🎯 Multi-targeting: .NET 6.0 and .NET 8.0
-- 🔐 AWS credential chain support
+- 🔐 Password-less AWS auth via Entra ID federation (managed identity → AWS STS), plus AWS credential chain and explicit-key fallbacks
 - 🔄 Long polling and configurable batch processing
 - 🐳 LocalStack support for local development
 
 📖 **[See full .NET documentation](./dotnet/README.md)**
+🔐 **[Authentication guide](./docs/AUTHENTICATION.md)** — recommended setup uses managed identity, no AWS secret in Azure
 🧪 **[LocalStack testing guide](./dotnet/localstack/README.md)**
 
 ## 🐍 Python Extension

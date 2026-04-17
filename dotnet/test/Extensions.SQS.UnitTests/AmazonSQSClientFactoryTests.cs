@@ -1,7 +1,10 @@
 namespace Extensions.SQS.UnitTests;
 
 using System;
+using Amazon;
+using Amazon.Runtime;
 using Azure.WebJobs.Extensions.SQS;
+using Azure.WebJobs.Extensions.SQS.Auth;
 using FluentAssertions;
 using Xunit;
 
@@ -214,6 +217,169 @@ public class AmazonSQSClientFactoryTests
         
         // Cleanup
         client.Dispose();
+    }
+
+    #endregion
+
+    #region Entra ID Federation Tests
+
+    [Fact]
+    public void Build_WithAwsRoleArn_CreatesClient()
+    {
+        var attribute = new SqsQueueTriggerAttribute
+        {
+            QueueUrl = ValidQueueUrl,
+            AwsRoleArn = "arn:aws:iam::123456789012:role/my-role",
+        };
+
+        using var client = AmazonSQSClientFactory.Build(attribute);
+
+        client.Should().NotBeNull();
+        client.Config.RegionEndpoint.SystemName.Should().Be("us-east-1");
+    }
+
+    [Fact]
+    public void SelectCredentials_WithRoleArnAndExplicitKeys_PrefersFederation()
+    {
+        // Federation must win over explicit keys. The SelectCredentials seam lets us
+        // assert the chosen credentials type directly instead of relying on "the call
+        // didn't throw" as a proxy for precedence.
+        var credentials = AmazonSQSClientFactory.SelectCredentials(
+            awsKeyId: "AKIAIOSFODNN7EXAMPLE",
+            awsAccessKey: "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+            awsRoleArn: "arn:aws:iam::123456789012:role/my-role",
+            awsStsAudience: "api://AWSSecurityTokenService",
+            awsRoleSessionName: "azure-functions-sqs",
+            awsSessionDurationSeconds: 3600,
+            stsRegion: RegionEndpoint.USEast1,
+            entraTenantId: null,
+            entraClientId: null,
+            entraClientSecret: null);
+
+        credentials.Should().BeOfType<EntraIdFederatedCredentials>();
+    }
+
+    [Fact]
+    public void SelectCredentials_WithExplicitKeysOnly_ReturnsBasicCredentials()
+    {
+        var credentials = AmazonSQSClientFactory.SelectCredentials(
+            awsKeyId: "AKIAIOSFODNN7EXAMPLE",
+            awsAccessKey: "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+            awsRoleArn: null,
+            awsStsAudience: "api://AWSSecurityTokenService",
+            awsRoleSessionName: "azure-functions-sqs",
+            awsSessionDurationSeconds: 3600,
+            stsRegion: RegionEndpoint.USEast1,
+            entraTenantId: null,
+            entraClientId: null,
+            entraClientSecret: null);
+
+        credentials.Should().BeOfType<BasicAWSCredentials>();
+    }
+
+    [Fact]
+    public void SelectCredentials_WithNoCredentials_ReturnsNullForDefaultChain()
+    {
+        var credentials = AmazonSQSClientFactory.SelectCredentials(
+            awsKeyId: null,
+            awsAccessKey: null,
+            awsRoleArn: null,
+            awsStsAudience: "api://AWSSecurityTokenService",
+            awsRoleSessionName: "azure-functions-sqs",
+            awsSessionDurationSeconds: 3600,
+            stsRegion: RegionEndpoint.USEast1,
+            entraTenantId: null,
+            entraClientId: null,
+            entraClientSecret: null);
+
+        credentials.Should().BeNull();
+    }
+
+    [Fact]
+    public void Build_WithAwsRoleArn_OnOutAttribute_CreatesClient()
+    {
+        var attribute = new SqsQueueOutAttribute
+        {
+            QueueUrl = ValidQueueUrl,
+            AwsRoleArn = "arn:aws:iam::123456789012:role/my-role",
+        };
+
+        using var client = AmazonSQSClientFactory.Build(attribute);
+
+        client.Should().NotBeNull();
+        client.Config.RegionEndpoint.SystemName.Should().Be("us-east-1");
+    }
+
+    [Fact]
+    public void Build_WithEmptyAwsRoleArn_FallsBackToCredentialChain()
+    {
+        var attribute = new SqsQueueTriggerAttribute
+        {
+            QueueUrl = ValidQueueUrl,
+            AwsRoleArn = "",
+        };
+
+        using var client = AmazonSQSClientFactory.Build(attribute);
+
+        client.Should().NotBeNull();
+    }
+
+    [Fact]
+    public void BuildEntraCredential_WithAllAppRegFields_ReturnsClientSecretCredential()
+    {
+        var credential = AmazonSQSClientFactory.BuildEntraCredential(
+            entraTenantId: "11111111-1111-1111-1111-111111111111",
+            entraClientId: "22222222-2222-2222-2222-222222222222",
+            entraClientSecret: "fake-secret-value");
+
+        credential.Should().BeOfType<global::Azure.Identity.ClientSecretCredential>();
+    }
+
+    [Fact]
+    public void BuildEntraCredential_WithNoAppRegFields_ReturnsDefaultAzureCredential()
+    {
+        var credential = AmazonSQSClientFactory.BuildEntraCredential(
+            entraTenantId: null,
+            entraClientId: null,
+            entraClientSecret: null);
+
+        credential.Should().BeOfType<global::Azure.Identity.DefaultAzureCredential>();
+    }
+
+    [Theory]
+    [InlineData(null, "client-id", "secret", "EntraTenantId")]
+    [InlineData("tenant-id", null, "secret", "EntraClientId")]
+    [InlineData("tenant-id", "client-id", null, "EntraClientSecret")]
+    [InlineData("", "client-id", "secret", "EntraTenantId")]
+    [InlineData("tenant-id", "", "secret", "EntraClientId")]
+    [InlineData("tenant-id", "client-id", "", "EntraClientSecret")]
+    public void BuildEntraCredential_WithPartialAppRegFields_Throws(
+        string? tenantId, string? clientId, string? clientSecret, string missingField)
+    {
+        // Partial app-reg configuration is a misconfiguration, not a fallback path.
+        // Silently downgrading to DefaultAzureCredential masks typo'd Key Vault references —
+        // works in dev via az login, fails opaquely in prod. Fail loud at startup instead.
+        var act = () => AmazonSQSClientFactory.BuildEntraCredential(tenantId, clientId, clientSecret);
+
+        act.Should().Throw<InvalidOperationException>()
+            .WithMessage($"*{missingField}*");
+    }
+
+    [Fact]
+    public void Build_WithAwsRoleArn_AndAppRegFields_CreatesClient()
+    {
+        var attribute = new SqsQueueTriggerAttribute
+        {
+            QueueUrl = ValidQueueUrl,
+            AwsRoleArn = "arn:aws:iam::123456789012:role/my-role",
+            EntraTenantId = "11111111-1111-1111-1111-111111111111",
+            EntraClientId = "22222222-2222-2222-2222-222222222222",
+            EntraClientSecret = "fake-secret-value",
+        };
+
+        using var client = AmazonSQSClientFactory.Build(attribute);
+
+        client.Should().NotBeNull();
     }
 
     #endregion
