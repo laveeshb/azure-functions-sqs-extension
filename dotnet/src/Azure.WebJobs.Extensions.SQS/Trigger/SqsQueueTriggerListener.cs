@@ -41,7 +41,7 @@ public class SqsQueueTriggerListener : IListener
         _sqsQueueOptions.Value.PollingInterval ??= TimeSpan.FromSeconds(5);
         _sqsQueueOptions.Value.VisibilityTimeout ??= TimeSpan.FromSeconds(30);
 
-        _amazonSqsClient = AmazonSQSClientFactory.Build(triggerParameters);
+        _amazonSqsClient = AmazonSQSClientFactory.Build(triggerParameters, _logger);
     }
 
     public void Cancel()

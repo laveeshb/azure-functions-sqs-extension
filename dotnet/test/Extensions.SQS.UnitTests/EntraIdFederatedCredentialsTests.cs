@@ -1,6 +1,7 @@
 namespace Extensions.SQS.UnitTests;
 
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Amazon;
@@ -8,6 +9,7 @@ using Amazon.SecurityToken.Model;
 using Azure.Core;
 using Azure.WebJobs.Extensions.SQS.Auth;
 using FluentAssertions;
+using Microsoft.Extensions.Logging;
 using Xunit;
 
 public class EntraIdFederatedCredentialsTests
@@ -172,5 +174,106 @@ public class EntraIdFederatedCredentialsTests
             sessionDurationSeconds: 3600,
             stsRegion: null!);
         act.Should().Throw<ArgumentNullException>();
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-1)]
+    [InlineData(899)]
+    public void Constructor_SessionDurationBelowMinimum_Throws(int durationSeconds)
+    {
+        // STS rejects assume-role sessions shorter than 900s. Surface the error at
+        // startup rather than at first SQS call.
+        var act = () => new EntraIdFederatedCredentials(
+            roleArn: "arn:aws:iam::123456789012:role/r",
+            audience: "api://AWSSecurityTokenService",
+            roleSessionName: "s",
+            sessionDurationSeconds: durationSeconds,
+            stsRegion: RegionEndpoint.USEast1);
+        act.Should().Throw<ArgumentOutOfRangeException>();
+    }
+
+    [Fact]
+    public void GetCredentials_LogsDebugOnRefresh()
+    {
+        var logger = new RecordingLogger();
+        var entraToken = new AccessToken("t", DateTimeOffset.UtcNow.AddMinutes(60));
+
+        var creds = new EntraIdFederatedCredentials(
+            roleArn: "arn:aws:iam::123456789012:role/r",
+            audience: "api://AWSSecurityTokenService",
+            roleSessionName: "s",
+            sessionDurationSeconds: 3600,
+            stsRegion: RegionEndpoint.USEast1,
+            logger: logger,
+            getEntraToken: (_, _) => new ValueTask<AccessToken>(entraToken),
+            assumeRoleAsync: (_, _) => Task.FromResult(MakeStsResponse()));
+
+        creds.GetCredentials();
+
+        logger.Entries.Should().ContainSingle(e => e.Level == LogLevel.Debug);
+    }
+
+    [Fact]
+    public void GetCredentials_LogsWarningWhenEntraTokenFails()
+    {
+        var logger = new RecordingLogger();
+
+        var creds = new EntraIdFederatedCredentials(
+            roleArn: "arn:aws:iam::123456789012:role/r",
+            audience: "api://AWSSecurityTokenService",
+            roleSessionName: "s",
+            sessionDurationSeconds: 3600,
+            stsRegion: RegionEndpoint.USEast1,
+            logger: logger,
+            getEntraToken: (_, _) => throw new InvalidOperationException("entra boom"),
+            assumeRoleAsync: (_, _) => Task.FromResult(MakeStsResponse()));
+
+        var act = () => creds.GetCredentials();
+
+        act.Should().Throw<InvalidOperationException>().WithMessage("*entra boom*");
+        logger.Entries.Should().Contain(e => e.Level == LogLevel.Warning && e.Exception is InvalidOperationException);
+    }
+
+    [Fact]
+    public void GetCredentials_LogsWarningWhenStsFails()
+    {
+        var logger = new RecordingLogger();
+        var entraToken = new AccessToken("t", DateTimeOffset.UtcNow.AddMinutes(60));
+
+        var creds = new EntraIdFederatedCredentials(
+            roleArn: "arn:aws:iam::123456789012:role/r",
+            audience: "api://AWSSecurityTokenService",
+            roleSessionName: "s",
+            sessionDurationSeconds: 3600,
+            stsRegion: RegionEndpoint.USEast1,
+            logger: logger,
+            getEntraToken: (_, _) => new ValueTask<AccessToken>(entraToken),
+            assumeRoleAsync: (_, _) => throw new InvalidOperationException("sts boom"));
+
+        var act = () => creds.GetCredentials();
+
+        act.Should().Throw<InvalidOperationException>().WithMessage("*sts boom*");
+        logger.Entries.Should().Contain(e => e.Level == LogLevel.Warning && e.Exception is InvalidOperationException);
+    }
+
+    private sealed class RecordingLogger : ILogger
+    {
+        public List<(LogLevel Level, Exception? Exception, string Message)> Entries { get; } = new();
+
+        public IDisposable? BeginScope<TState>(TState state) where TState : notnull => NullScope.Instance;
+
+        public bool IsEnabled(LogLevel logLevel) => true;
+
+        public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
+        {
+            Entries.Add((logLevel, exception, formatter(state, exception)));
+        }
+
+        private sealed class NullScope : IDisposable
+        {
+            public static readonly NullScope Instance = new();
+            public void Dispose() { }
+        }
     }
 }

@@ -7,6 +7,7 @@ using Amazon;
 using Amazon.Runtime;
 using Amazon.SecurityToken;
 using Amazon.SecurityToken.Model;
+using Microsoft.Extensions.Logging;
 using AzureCore = global::Azure.Core;
 using AzureIdentity = global::Azure.Identity;
 
@@ -17,11 +18,14 @@ using AzureIdentity = global::Azure.Identity;
 /// </summary>
 public sealed class EntraIdFederatedCredentials : RefreshingAWSCredentials
 {
+    internal const int MinSessionDurationSeconds = 900;
+
     private readonly string _roleArn;
     private readonly string _audience;
     private readonly string _roleSessionName;
     private readonly int _sessionDurationSeconds;
     private readonly RegionEndpoint _stsRegion;
+    private readonly ILogger? _logger;
     private readonly Func<AzureCore.TokenRequestContext, CancellationToken, ValueTask<AzureCore.AccessToken>> _getEntraToken;
     private readonly Func<AssumeRoleWithWebIdentityRequest, CancellationToken, Task<AssumeRoleWithWebIdentityResponse>> _assumeRoleAsync;
 
@@ -31,14 +35,23 @@ public sealed class EntraIdFederatedCredentials : RefreshingAWSCredentials
         string roleSessionName,
         int sessionDurationSeconds,
         RegionEndpoint stsRegion,
+        ILogger? logger = null,
         Func<AzureCore.TokenRequestContext, CancellationToken, ValueTask<AzureCore.AccessToken>>? getEntraToken = null,
         Func<AssumeRoleWithWebIdentityRequest, CancellationToken, Task<AssumeRoleWithWebIdentityResponse>>? assumeRoleAsync = null)
     {
         _roleArn = roleArn ?? throw new ArgumentNullException(nameof(roleArn));
         _audience = audience ?? throw new ArgumentNullException(nameof(audience));
         _roleSessionName = roleSessionName ?? throw new ArgumentNullException(nameof(roleSessionName));
+        if (sessionDurationSeconds < MinSessionDurationSeconds)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(sessionDurationSeconds),
+                sessionDurationSeconds,
+                $"STS requires an assumed-role session of at least {MinSessionDurationSeconds} seconds.");
+        }
         _sessionDurationSeconds = sessionDurationSeconds;
         _stsRegion = stsRegion ?? throw new ArgumentNullException(nameof(stsRegion));
+        _logger = logger;
         _getEntraToken = getEntraToken ?? new AzureIdentity.DefaultAzureCredential().GetTokenAsync;
         _assumeRoleAsync = assumeRoleAsync ?? DefaultAssumeRoleAsync;
     }
@@ -53,19 +66,42 @@ public sealed class EntraIdFederatedCredentials : RefreshingAWSCredentials
 
     protected override async Task<CredentialsRefreshState> GenerateNewCredentialsAsync()
     {
-        var entraToken = await _getEntraToken(
-            new AzureCore.TokenRequestContext(new[] { $"{_audience}/.default" }),
-            CancellationToken.None).ConfigureAwait(false);
+        AzureCore.AccessToken entraToken;
+        try
+        {
+            entraToken = await _getEntraToken(
+                new AzureCore.TokenRequestContext(new[] { $"{_audience}/.default" }),
+                CancellationToken.None).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogWarning(ex, "Failed to acquire Entra ID token for audience {Audience}.", _audience);
+            throw;
+        }
 
-        var stsResponse = await _assumeRoleAsync(
-            new AssumeRoleWithWebIdentityRequest
-            {
-                RoleArn = _roleArn,
-                RoleSessionName = _roleSessionName,
-                WebIdentityToken = entraToken.Token,
-                DurationSeconds = _sessionDurationSeconds,
-            },
-            CancellationToken.None).ConfigureAwait(false);
+        AssumeRoleWithWebIdentityResponse stsResponse;
+        try
+        {
+            stsResponse = await _assumeRoleAsync(
+                new AssumeRoleWithWebIdentityRequest
+                {
+                    RoleArn = _roleArn,
+                    RoleSessionName = _roleSessionName,
+                    WebIdentityToken = entraToken.Token,
+                    DurationSeconds = _sessionDurationSeconds,
+                },
+                CancellationToken.None).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogWarning(ex, "STS AssumeRoleWithWebIdentity failed for role {RoleArn}.", _roleArn);
+            throw;
+        }
+
+        _logger?.LogDebug(
+            "Refreshed AWS credentials via Entra federation for role {RoleArn}; expires at {Expiration:O}.",
+            _roleArn,
+            stsResponse.Credentials.Expiration);
 
         return new CredentialsRefreshState(
             new ImmutableCredentials(

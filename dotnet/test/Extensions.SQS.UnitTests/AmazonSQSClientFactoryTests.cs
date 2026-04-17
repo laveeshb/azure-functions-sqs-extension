@@ -1,7 +1,10 @@
 namespace Extensions.SQS.UnitTests;
 
 using System;
+using Amazon;
+using Amazon.Runtime;
 using Azure.WebJobs.Extensions.SQS;
+using Azure.WebJobs.Extensions.SQS.Auth;
 using FluentAssertions;
 using Xunit;
 
@@ -236,24 +239,60 @@ public class AmazonSQSClientFactoryTests
     }
 
     [Fact]
-    public void Build_WithAwsRoleArn_TakesPrecedenceOverExplicitKeys()
+    public void SelectCredentials_WithRoleArnAndExplicitKeys_PrefersFederation()
     {
-        // Both federation config and explicit keys provided; federation should win.
-        // We can't directly inspect the credentials provider attached to the client
-        // without internal SDK access, but at minimum the call must succeed without
-        // touching either credential source (no STS call happens until the client
-        // first sends a request).
-        var attribute = new SqsQueueTriggerAttribute
-        {
-            QueueUrl = ValidQueueUrl,
-            AWSKeyId = "AKIAIOSFODNN7EXAMPLE",
-            AWSAccessKey = "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
-            AwsRoleArn = "arn:aws:iam::123456789012:role/my-role",
-        };
+        // Federation must win over explicit keys. The SelectCredentials seam lets us
+        // assert the chosen credentials type directly instead of relying on "the call
+        // didn't throw" as a proxy for precedence.
+        var credentials = AmazonSQSClientFactory.SelectCredentials(
+            awsKeyId: "AKIAIOSFODNN7EXAMPLE",
+            awsAccessKey: "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+            awsRoleArn: "arn:aws:iam::123456789012:role/my-role",
+            awsStsAudience: "api://AWSSecurityTokenService",
+            awsRoleSessionName: "azure-functions-sqs",
+            awsSessionDurationSeconds: 3600,
+            stsRegion: RegionEndpoint.USEast1,
+            entraTenantId: null,
+            entraClientId: null,
+            entraClientSecret: null);
 
-        using var client = AmazonSQSClientFactory.Build(attribute);
+        credentials.Should().BeOfType<EntraIdFederatedCredentials>();
+    }
 
-        client.Should().NotBeNull();
+    [Fact]
+    public void SelectCredentials_WithExplicitKeysOnly_ReturnsBasicCredentials()
+    {
+        var credentials = AmazonSQSClientFactory.SelectCredentials(
+            awsKeyId: "AKIAIOSFODNN7EXAMPLE",
+            awsAccessKey: "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+            awsRoleArn: null,
+            awsStsAudience: "api://AWSSecurityTokenService",
+            awsRoleSessionName: "azure-functions-sqs",
+            awsSessionDurationSeconds: 3600,
+            stsRegion: RegionEndpoint.USEast1,
+            entraTenantId: null,
+            entraClientId: null,
+            entraClientSecret: null);
+
+        credentials.Should().BeOfType<BasicAWSCredentials>();
+    }
+
+    [Fact]
+    public void SelectCredentials_WithNoCredentials_ReturnsNullForDefaultChain()
+    {
+        var credentials = AmazonSQSClientFactory.SelectCredentials(
+            awsKeyId: null,
+            awsAccessKey: null,
+            awsRoleArn: null,
+            awsStsAudience: "api://AWSSecurityTokenService",
+            awsRoleSessionName: "azure-functions-sqs",
+            awsSessionDurationSeconds: 3600,
+            stsRegion: RegionEndpoint.USEast1,
+            entraTenantId: null,
+            entraClientId: null,
+            entraClientSecret: null);
+
+        credentials.Should().BeNull();
     }
 
     [Fact]
@@ -308,20 +347,22 @@ public class AmazonSQSClientFactoryTests
     }
 
     [Theory]
-    [InlineData(null, "client-id", "secret")]
-    [InlineData("tenant-id", null, "secret")]
-    [InlineData("tenant-id", "client-id", null)]
-    [InlineData("", "client-id", "secret")]
-    [InlineData("tenant-id", "", "secret")]
-    [InlineData("tenant-id", "client-id", "")]
-    public void BuildEntraCredential_WithPartialAppRegFields_ReturnsDefaultAzureCredential(
-        string? tenantId, string? clientId, string? clientSecret)
+    [InlineData(null, "client-id", "secret", "EntraTenantId")]
+    [InlineData("tenant-id", null, "secret", "EntraClientId")]
+    [InlineData("tenant-id", "client-id", null, "EntraClientSecret")]
+    [InlineData("", "client-id", "secret", "EntraTenantId")]
+    [InlineData("tenant-id", "", "secret", "EntraClientId")]
+    [InlineData("tenant-id", "client-id", "", "EntraClientSecret")]
+    public void BuildEntraCredential_WithPartialAppRegFields_Throws(
+        string? tenantId, string? clientId, string? clientSecret, string missingField)
     {
-        // Partial app-reg config falls back to DefaultAzureCredential rather than failing —
-        // this lets users override one field via env var without redeclaring all three.
-        var credential = AmazonSQSClientFactory.BuildEntraCredential(tenantId, clientId, clientSecret);
+        // Partial app-reg configuration is a misconfiguration, not a fallback path.
+        // Silently downgrading to DefaultAzureCredential masks typo'd Key Vault references —
+        // works in dev via az login, fails opaquely in prod. Fail loud at startup instead.
+        var act = () => AmazonSQSClientFactory.BuildEntraCredential(tenantId, clientId, clientSecret);
 
-        credential.Should().BeOfType<global::Azure.Identity.DefaultAzureCredential>();
+        act.Should().Throw<InvalidOperationException>()
+            .WithMessage($"*{missingField}*");
     }
 
     [Fact]
