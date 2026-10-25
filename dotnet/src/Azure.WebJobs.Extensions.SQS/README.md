@@ -153,6 +153,32 @@ Triggers a function when messages are available in an SQS queue.
 | `VisibilityTimeout` | int | Message visibility timeout (seconds) | 30 |
 | `AutoDelete` | bool | Auto-delete on success | true |
 
+## Scaling
+
+The trigger reports queue depth (visible plus in-flight messages, from `GetQueueAttributes`) to the Functions host through a scale monitor and a target scaler. The target is `ceil(queue length / targetMessagesPerInstance)`. It needs `sqs:GetQueueAttributes` on the queue.
+
+```json
+{
+  "version": "2.0",
+  "extensions": {
+    "sqsQueue": {
+      "targetMessagesPerInstance": 10
+    }
+  }
+}
+```
+
+`targetMessagesPerInstance` defaults to `maxNumberOfMessages`.
+
+Which hosting plans act on this:
+
+- **Elastic Premium:** the host answers the scale controller from these objects only when Runtime Scale Monitoring is enabled. In one test with a stub trigger (not this extension) on Elastic Premium with Runtime Scale Monitoring on, the instance count followed the stub's target. Microsoft's docs list only first-party extensions as supported there, and this extension has not been tested against a real queue.
+- **Consumption:** a Microsoft engineer has said custom scale monitors are not used. Not tested here.
+- **Flex Consumption:** not documented, not tested.
+- **Dedicated:** no event-driven scaling.
+
+SQS counts are approximate. FIFO queues cannot use more parallelism than they have active message groups, so cap the app's maximum instances.
+
 ### SqsQueueOutAttribute
 
 Sends messages to an SQS queue.

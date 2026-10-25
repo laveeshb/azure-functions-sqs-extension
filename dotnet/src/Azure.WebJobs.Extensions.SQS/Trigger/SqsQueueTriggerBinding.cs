@@ -44,7 +44,8 @@ public class SqsQueueTriggerBinding : ITriggerBinding
         return Task.FromResult<IListener>(new SqsQueueTriggerListener(
             triggerParameters: _triggerParameters,
             sqsQueueOptions: _sqsQueueOptions,
-            executor: context.Executor));
+            executor: context.Executor,
+            functionId: context.Descriptor?.Id ?? string.Empty));
     }
 
     public ParameterDescriptor ToParameterDescriptor()
