@@ -10,10 +10,11 @@ using Amazon.SQS;
 using Amazon.SQS.Model;
 using Microsoft.Azure.WebJobs.Host.Executors;
 using Microsoft.Azure.WebJobs.Host.Listeners;
+using Microsoft.Azure.WebJobs.Host.Scale;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
-public class SqsQueueTriggerListener : IListener
+public class SqsQueueTriggerListener : IListener, IScaleMonitorProvider, ITargetScalerProvider
 {
     private Task? _pollingTask;
     private AmazonSQSClient? _amazonSqsClient;
@@ -22,6 +23,10 @@ public class SqsQueueTriggerListener : IListener
     private readonly SqsQueueTriggerAttribute _triggerParameters;
     private readonly ITriggeredFunctionExecutor _executor;
     private readonly ILogger? _logger;
+    private readonly string _functionId;
+    private IAmazonSQS? _scaleClient;
+    private SqsQueueScaleMonitor? _scaleMonitor;
+    private SqsQueueTargetScaler? _targetScaler;
     private volatile bool _isRunning;
     private bool _disposed;
 
@@ -29,12 +34,14 @@ public class SqsQueueTriggerListener : IListener
         SqsQueueTriggerAttribute triggerParameters, 
         IOptions<SqsQueueOptions> sqsQueueOptions, 
         ITriggeredFunctionExecutor executor,
-        ILogger? logger = null)
+        ILogger? logger = null,
+        string functionId = "")
     {
         _executor = executor ?? throw new ArgumentNullException(nameof(executor));
         _sqsQueueOptions = sqsQueueOptions ?? throw new ArgumentNullException(nameof(sqsQueueOptions));
         _triggerParameters = triggerParameters ?? throw new ArgumentNullException(nameof(triggerParameters));
         _logger = logger;
+        _functionId = functionId ?? string.Empty;
 
         // Set default values
         _sqsQueueOptions.Value.MaxNumberOfMessages ??= 5;
@@ -42,6 +49,31 @@ public class SqsQueueTriggerListener : IListener
         _sqsQueueOptions.Value.VisibilityTimeout ??= TimeSpan.FromSeconds(30);
 
         _amazonSqsClient = AmazonSQSClientFactory.Build(triggerParameters);
+    }
+
+    public IScaleMonitor GetMonitor()
+    {
+        return _scaleMonitor ??= new SqsQueueScaleMonitor(
+            _functionId, GetScaleClient(), _triggerParameters.QueueUrl, GetTargetMessagesPerInstance(), _logger);
+    }
+
+    public ITargetScaler GetTargetScaler()
+    {
+        return _targetScaler ??= new SqsQueueTargetScaler(
+            _functionId, GetScaleClient(), _triggerParameters.QueueUrl, GetTargetMessagesPerInstance(), _logger);
+    }
+
+    // Separate from the polling client: the host disposes the listener when it stops it,
+    // and can still call the scalers after that.
+    private IAmazonSQS GetScaleClient() => _scaleClient ??= AmazonSQSClientFactory.Build(_triggerParameters);
+
+    private int GetTargetMessagesPerInstance()
+    {
+        var options = _sqsQueueOptions.Value;
+        if (options.TargetMessagesPerInstance is > 0 and var target)
+            return target;
+
+        return options.MaxNumberOfMessages is > 0 and var max ? max : 5;
     }
 
     public void Cancel()

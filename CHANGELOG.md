@@ -8,6 +8,11 @@ This project follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) an
 
 ## .NET
 
+### Unreleased
+
+#### Added
+- Scale monitor and target scaler for the SQS trigger, with a `targetMessagesPerInstance` setting ([#86](https://github.com/laveeshb/azure-functions-sqs-extension/issues/86)). The trigger now calls `sqs:GetQueueAttributes` on the queue. Which hosting plans act on it is only partly tested; see the WebJobs README.
+
 ### 1.1.1 — 2026-04-14
 
 #### Fixed

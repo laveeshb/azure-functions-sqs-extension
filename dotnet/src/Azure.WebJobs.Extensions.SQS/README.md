@@ -164,6 +164,34 @@ Sends messages to an SQS queue.
 | `AWSAccessKey` | string | AWS Secret Access Key (optional) | null |
 | `Region` | string | AWS Region (optional) | null |
 
+## Scaling
+
+The trigger reports queue depth (visible plus in-flight messages, from `GetQueueAttributes`) to the Functions host through a scale monitor and a target scaler. The target is `ceil(queue length / targetMessagesPerInstance)`. It needs `sqs:GetQueueAttributes` on the queue.
+
+```json
+{
+  "version": "2.0",
+  "extensions": {
+    "sqsQueue": {
+      "targetMessagesPerInstance": 10
+    }
+  }
+}
+```
+
+`targetMessagesPerInstance` is a host.json setting, not an attribute property. If it is unset or below 1, the trigger uses `maxNumberOfMessages` from host.json, which is 5 when unset.
+
+Which hosting plans act on this:
+
+- **Elastic Premium:** the host answers the scale controller from these objects only when Runtime Scale Monitoring is enabled. In one test on Windows EP1 (in-process .NET 8) with a real SQS queue, 300 messages took the app from 1 to 2 instances to 5, and it fell back to 1 afterwards. With Runtime Scale Monitoring off, a second run of 100 messages stayed on 1 instance. That was one run each in one region. Microsoft's docs list only first-party extensions as supported here.
+- **Consumption:** a Microsoft engineer has said custom scale monitors are not used. Not tested here.
+- **Flex Consumption:** not documented, not tested.
+- **Dedicated:** no event-driven scaling.
+
+SQS counts are approximate. FIFO queues cannot use more parallelism than they have active message groups, so cap the app's maximum instances.
+
+Isolated worker apps get the scaler from the host-side package, so they need a Worker package release that points at it.
+
 ## Advanced Usage
 
 ### Binding to Message Object

@@ -21,4 +21,10 @@ public class SqsQueueOptions
     /// Time that messages are hidden from other consumers after being retrieved
     /// </summary>
     public TimeSpan? VisibilityTimeout { get; set; }
+
+    /// <summary>
+    /// Number of messages one instance is expected to handle at a time. Used as the
+    /// target per instance when the host scales out. Defaults to MaxNumberOfMessages.
+    /// </summary>
+    public int? TargetMessagesPerInstance { get; set; }
 }
