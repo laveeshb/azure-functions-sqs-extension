@@ -49,7 +49,7 @@ public class SqsQueueTargetScaler : ITargetScaler
         var target = (int)Math.Min(int.MaxValue, (queueLength + _targetMessagesPerInstance - 1) / _targetMessagesPerInstance);
 
         _logger?.LogDebug(
-            "SQS target scaler for {QueueUrl}: queue length {QueueLength}, target per instance {Target}, workers {Workers}",
+            "SQS target scaler for {QueueUrl}: queue length {QueueLength}, target per instance {TargetPerInstance}, desired workers {DesiredWorkers}",
             _queueUrl, queueLength, _targetMessagesPerInstance, target);
 
         return new TargetScalerResult { TargetWorkerCount = target };

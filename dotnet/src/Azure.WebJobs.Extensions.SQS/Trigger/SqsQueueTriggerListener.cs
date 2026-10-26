@@ -24,6 +24,7 @@ public class SqsQueueTriggerListener : IListener, IScaleMonitorProvider, ITarget
     private readonly ITriggeredFunctionExecutor _executor;
     private readonly ILogger? _logger;
     private readonly string _functionId;
+    private IAmazonSQS? _scaleClient;
     private SqsQueueScaleMonitor? _scaleMonitor;
     private SqsQueueTargetScaler? _targetScaler;
     private volatile bool _isRunning;
@@ -53,20 +54,26 @@ public class SqsQueueTriggerListener : IListener, IScaleMonitorProvider, ITarget
     public IScaleMonitor GetMonitor()
     {
         return _scaleMonitor ??= new SqsQueueScaleMonitor(
-            _functionId, _amazonSqsClient!, _triggerParameters.QueueUrl, GetTargetMessagesPerInstance(), _logger);
+            _functionId, GetScaleClient(), _triggerParameters.QueueUrl, GetTargetMessagesPerInstance(), _logger);
     }
 
     public ITargetScaler GetTargetScaler()
     {
         return _targetScaler ??= new SqsQueueTargetScaler(
-            _functionId, _amazonSqsClient!, _triggerParameters.QueueUrl, GetTargetMessagesPerInstance(), _logger);
+            _functionId, GetScaleClient(), _triggerParameters.QueueUrl, GetTargetMessagesPerInstance(), _logger);
     }
+
+    // Separate from the polling client: the host disposes the listener when it stops it,
+    // and can still call the scalers after that.
+    private IAmazonSQS GetScaleClient() => _scaleClient ??= AmazonSQSClientFactory.Build(_triggerParameters);
 
     private int GetTargetMessagesPerInstance()
     {
         var options = _sqsQueueOptions.Value;
-        var target = options.TargetMessagesPerInstance ?? options.MaxNumberOfMessages ?? 5;
-        return target > 0 ? target : 1;
+        if (options.TargetMessagesPerInstance is > 0 and var target)
+            return target;
+
+        return options.MaxNumberOfMessages is > 0 and var max ? max : 5;
     }
 
     public void Cancel()

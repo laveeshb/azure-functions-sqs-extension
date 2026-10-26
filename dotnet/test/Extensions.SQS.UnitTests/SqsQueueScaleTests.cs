@@ -137,6 +137,47 @@ public class SqsQueueScaleTests
     }
 
     [Fact]
+    public void GetScaleStatus_NonGenericPathUsedByHost_VotesOnLatestSample()
+    {
+        IScaleMonitor monitor = Monitor(ClientReturning(0, 0).Object, target: 10);
+        var context = new ScaleStatusContext
+        {
+            WorkerCount = 2,
+            Metrics = new ScaleMetrics[]
+            {
+                new SqsQueueScaleMetrics { QueueLength = 5 },
+                new SqsQueueScaleMetrics { QueueLength = 50 }
+            }
+        };
+
+        monitor.GetScaleStatus(context).Vote.Should().Be(ScaleVote.ScaleOut);
+    }
+
+    [Fact]
+    public async Task GetMetricsAsync_ClientFails_Rethrows()
+    {
+        var client = new Mock<IAmazonSQS>();
+        client.Setup(c => c.GetQueueAttributesAsync(It.IsAny<GetQueueAttributesRequest>(), default))
+            .ThrowsAsync(new AmazonSQSException("denied"));
+
+        var action = () => Monitor(client.Object).GetMetricsAsync();
+
+        await action.Should().ThrowAsync<AmazonSQSException>();
+    }
+
+    [Fact]
+    public async Task GetMetricsAsync_ResponseWithoutCounts_ThrowsInsteadOfReportingEmptyQueue()
+    {
+        var client = new Mock<IAmazonSQS>();
+        client.Setup(c => c.GetQueueAttributesAsync(It.IsAny<GetQueueAttributesRequest>(), default))
+            .ReturnsAsync(new GetQueueAttributesResponse());
+
+        var action = () => Monitor(client.Object).GetMetricsAsync();
+
+        await action.Should().ThrowAsync<InvalidOperationException>();
+    }
+
+    [Fact]
     public void Constructor_NonPositiveTarget_Throws()
     {
         var action = () => Monitor(ClientReturning(0, 0).Object, target: 0);
@@ -214,6 +255,22 @@ public class SqsQueueScaleTests
 
         listener.GetMonitor().Should().BeSameAs(listener.GetMonitor());
         listener.GetTargetScaler().Should().BeSameAs(listener.GetTargetScaler());
+    }
+
+    [Theory]
+    [InlineData(null, 4, 3, ScaleVote.None)]       // falls back to MaxNumberOfMessages
+    [InlineData(0, 4, 3, ScaleVote.None)]          // zero is ignored, not treated as 1
+    [InlineData(-5, 4, 3, ScaleVote.None)]         // negative is ignored
+    [InlineData(2, 4, 3, ScaleVote.ScaleOut)]      // explicit setting wins
+    [InlineData(null, null, 5, ScaleVote.None)]    // listener default of 5
+    [InlineData(null, null, 6, ScaleVote.ScaleOut)]
+    public void Listener_TargetPerInstanceComesFromOptions(int? target, int? max, long queueLength, ScaleVote expected)
+    {
+        using var listener = Listener(new SqsQueueOptions { TargetMessagesPerInstance = target, MaxNumberOfMessages = max });
+
+        var status = ((IScaleMonitor<SqsQueueScaleMetrics>)listener.GetMonitor()).GetScaleStatus(Context(1, queueLength));
+
+        status.Vote.Should().Be(expected);
     }
 
     #endregion
