@@ -183,7 +183,7 @@ The trigger reports queue depth (visible plus in-flight messages, from `GetQueue
 
 Which hosting plans act on this:
 
-- **Elastic Premium:** the host answers the scale controller from these objects only when Runtime Scale Monitoring is enabled. In one test with a stub trigger (not this extension), the app's instance count rose to 5 after the stub's target was set to 5, and fell to 1 after it was set to 1. The test was a single run without a control run, and the target of 5 equalled the plan's burst limit. Microsoft's docs list only first-party extensions as supported here, and this extension has not been tested against a real queue.
+- **Elastic Premium:** the host answers the scale controller from these objects only when Runtime Scale Monitoring is enabled. In one test on Windows EP1 (in-process .NET 8) with a real SQS queue, 300 messages took the app from 1 to 2 instances to 5, and it fell back to 1 afterwards. With Runtime Scale Monitoring off, a second run of 100 messages stayed on 1 instance. That was one run each in one region. Microsoft's docs list only first-party extensions as supported here.
 - **Consumption:** a Microsoft engineer has said custom scale monitors are not used. Not tested here.
 - **Flex Consumption:** not documented, not tested.
 - **Dedicated:** no event-driven scaling.
